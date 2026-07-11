@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {# ---- SEO ---- #}
+    <title>{% block title %}Koi · Restaurante Japonés Premium en Madrid{% endblock %}</title>
+    <meta name="description" content="{% block description %}Koi es un restaurante japonés premium en Madrid. Cocina de autor, sushi elaborado al momento y una experiencia gastronómica inolvidable. Reserva tu mesa.{% endblock %}">
+    <meta name="keywords" content="restaurante japonés, sushi Madrid, ramen, sashimi, nigiri, cocina japonesa premium, Koi">
+    <meta name="author" content="Koi">
+
+    {# ---- Open Graph ---- #}
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Koi · Restaurante Japonés Premium">
+    <meta property="og:description" content="Una experiencia gastronómica japonesa de lujo en el corazón de Madrid.">
+    <meta property="og:locale" content="es_ES">
+    <meta property="og:site_name" content="Koi">
+
+    {# ---- Favicon ---- #}
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23d4af37'>鯉</text></svg>">
+
+    {# ---- Fuentes ---- #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    {# ---- CSS ---- #}
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- ==================== NAVBAR ==================== -->
+    <header class="navbar" id="navbar">
+        <div class="container navbar__inner">
+            <a href="/" class="navbar__logo">
+                <span class="navbar__logo-mark">鯉</span>
+                <span class="navbar__logo-text">KOI</span>
+            </a>
+
+            <nav class="navbar__nav" id="navMenu">
+                <a href="/menu" class="navbar__link">Menú</a>
+                <a href="/reservas" class="navbar__link">Reservas</a>
+                <a href="/#nosotros" class="navbar__link">Nosotros</a>
+                <a href="/#contacto" class="navbar__link">Contacto</a>
+                <a href="/reservas" class="btn btn--gold navbar__cta">Reservar</a>
+            </nav>
+
+            <button class="navbar__toggle" id="navToggle" aria-label="Abrir menú">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== CONTENIDO ==================== -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer" id="contacto">
+        <div class="container footer__inner">
+            <div class="footer__col footer__brand">
+                <span class="footer__logo">鯉 KOI</span>
+                <p class="footer__tagline">Alta cocina japonesa en el corazón de Madrid. Tradición, precisión y producto de temporada.</p>
+                <div class="footer__social">
+                    <a href="#" aria-label="Instagram">Instagram</a>
+                    <a href="#" aria-label="Facebook">Facebook</a>
+                    <a href="#" aria-label="X">X</a>
+                </div>
+            </div>
+
+            <div class="footer__col">
+                <h4 class="footer__title">Contacto</h4>
+                <p>{{ restaurant.address }}</p>
+                <p><a href="tel:{{ restaurant.phone }}">{{ restaurant.phone }}</a></p>
+                <p><a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></p>
+            </div>
+
+            <div class="footer__col">
+                <h4 class="footer__title">Horario</h4>
+                <ul class="footer__hours">
+                    <li><span>Lun — Jue</span><span>13:00 – 16:00 · 20:00 – 23:30</span></li>
+                    <li><span>Vie — Sáb</span><span>13:00 – 16:30 · 20:00 – 00:30</span></li>
+                    <li><span>Domingo</span><span>13:00 – 16:30</span></li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4 class="footer__title">Explora</h4>
+                <ul class="footer__links">
+                    <li><a href="/menu">Nuestro Menú</a></li>
+                    <li><a href="/reservas">Reservar Mesa</a></li>
+                    <li><a href="/#nosotros">Nuestra Historia</a></li>
+                    <li><a href="/admin">Acceso Empleados</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer__bottom">
+            <div class="container">
+                <p>&copy; <span id="year"></span> Koi Restaurante. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

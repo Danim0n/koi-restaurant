@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block admin_title %}Panel Koi{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23d4af37'>鯉</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    {% block admin_css %}{% endblock %}
+</head>
+<body class="admin-body">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar__logo">
+            <span class="admin-sidebar__mark">鯉</span>
+            <span class="admin-sidebar__text">KOI</span>
+        </div>
+        <nav class="admin-sidebar__nav">
+            <a href="/admin/dashboard" class="admin-nav-link" data-page="dashboard">
+                <span class="admin-nav-link__icon">▤</span> Dashboard
+            </a>
+            <a href="/admin/reservas" class="admin-nav-link" data-page="reservas">
+                <span class="admin-nav-link__icon">▦</span> Reservas
+            </a>
+            <a href="/admin/menu" class="admin-nav-link" data-page="menu">
+                <span class="admin-nav-link__icon">▥</span> Menú
+            </a>
+        </nav>
+        <div class="admin-sidebar__footer">
+            <a href="/" class="admin-nav-link" target="_blank">↗ Ver web</a>
+            <button class="admin-nav-link admin-logout" id="logoutBtn">⎋ Cerrar sesión</button>
+        </div>
+    </aside>
+
+    <!-- Contenido -->
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <button class="admin-topbar__toggle" id="sidebarToggle" aria-label="Menú">☰</button>
+            <h1 class="admin-topbar__title">{% block page_title %}Panel{% endblock %}</h1>
+            <div class="admin-topbar__user" id="adminUser">—</div>
+        </header>
+        <div class="admin-content">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Contenedor de notificaciones toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/admin.js"></script>
+    {% block admin_js %}{% endblock %}
+</body>
+</html>

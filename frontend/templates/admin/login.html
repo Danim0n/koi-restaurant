@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso · Panel Koi</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%23d4af37'>鯉</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="login-body">
+    <div class="login-box">
+        <div class="login-logo">
+            <span class="login-logo__mark">鯉</span>
+            <span class="login-logo__text">KOI</span>
+        </div>
+        <p class="login-subtitle">Panel de administración</p>
+
+        <form id="loginForm" class="login-form">
+            <div class="admin-field">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" name="email" required placeholder="admin@koi.com" autocomplete="username">
+            </div>
+            <div class="admin-field">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-admin btn-admin--gold btn-admin--block" id="loginBtn">Acceder</button>
+            <div class="login-error" id="loginError" hidden></div>
+        </form>
+
+        <p class="login-demo">Demo: <strong>admin@koi.com</strong> / <strong>admin123</strong></p>
+        <a href="/" class="login-back">← Volver a la web</a>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+    <script>KoiAdmin.initLogin();</script>
+</body>
+</html>

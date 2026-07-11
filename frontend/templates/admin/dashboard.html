@@ -1,0 +1,71 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_title %}Dashboard · Panel Koi{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<!-- Tarjetas de estadísticas -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-card__label">Reservas hoy</span>
+        <span class="stat-card__value" id="statToday">—</span>
+        <span class="stat-card__icon">▦</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-card__label">Esta semana</span>
+        <span class="stat-card__value" id="statWeek">—</span>
+        <span class="stat-card__icon">▤</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-card__label">Total clientes</span>
+        <span class="stat-card__value" id="statClients">—</span>
+        <span class="stat-card__icon">☺</span>
+    </div>
+    <div class="stat-card stat-card--gold">
+        <span class="stat-card__label">Ocupación hoy</span>
+        <span class="stat-card__value" id="statOccupancy">—</span>
+        <span class="stat-card__icon">◑</span>
+    </div>
+</div>
+
+<!-- Reservas del día -->
+<section class="admin-panel">
+    <div class="admin-panel__head">
+        <h2>Reservas de hoy</h2>
+        <a href="/admin/reservas" class="btn-admin btn-admin--ghost">Ver todas</a>
+    </div>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Hora</th><th>Cliente</th><th>Personas</th><th>Teléfono</th><th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="todayTable">
+                <tr><td colspan="5" class="table-empty">Cargando…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Próximas reservas -->
+<section class="admin-panel">
+    <div class="admin-panel__head">
+        <h2>Próximas reservas</h2>
+    </div>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Personas</th><th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="upcomingTable">
+                <tr><td colspan="5" class="table-empty">Cargando…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block admin_js %}<script>KoiAdmin.initDashboard();</script>{% endblock %}

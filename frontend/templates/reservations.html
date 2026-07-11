@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Reservas · Koi Restaurante Japonés{% endblock %}
+{% block description %}Reserva tu mesa en Koi de forma rápida y sencilla. Vive una experiencia gastronómica japonesa premium en Madrid.{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div class="page-header__overlay"></div>
+    <div class="container page-header__content reveal">
+        <span class="eyebrow eyebrow--center">予約 · Reserva</span>
+        <h1 class="page-header__title">Reserva tu mesa</h1>
+        <p class="page-header__sub">Completa el formulario y confirmaremos tu reserva a la mayor brevedad.</p>
+    </div>
+</header>
+
+<section class="section reservation-section">
+    <div class="container reservation__grid">
+        <!-- Formulario -->
+        <div class="reservation__form-wrap reveal">
+            <form id="reservationForm" class="reservation-form" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Nombre completo *</label>
+                        <input type="text" id="name" name="customer_name" required minlength="2" placeholder="Tu nombre">
+                        <span class="form-error" data-for="name"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Teléfono *</label>
+                        <input type="tel" id="phone" name="customer_phone" required placeholder="+34 600 000 000">
+                        <span class="form-error" data-for="phone"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo electrónico *</label>
+                    <input type="email" id="email" name="customer_email" required placeholder="tucorreo@email.com">
+                    <span class="form-error" data-for="email"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Fecha *</label>
+                        <input type="date" id="date" name="date" required>
+                        <span class="form-error" data-for="date"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="time">Hora *</label>
+                        <select id="time" name="time" required>
+                            <option value="">Selecciona una hora</option>
+                        </select>
+                        <span class="form-error" data-for="time"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="guests">Comensales *</label>
+                        <select id="guests" name="guests" required>
+                            {% for n in range(1, 13) %}
+                            <option value="{{ n }}">{{ n }} {{ 'persona' if n == 1 else 'personas' }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="form-error" data-for="guests"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="requests">Comentarios o peticiones especiales</label>
+                    <textarea id="requests" name="special_requests" rows="3" placeholder="Alergias, celebración, preferencias de mesa…"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn--gold btn--block" id="submitBtn">Confirmar reserva</button>
+
+                <div class="form-message" id="formMessage" hidden></div>
+            </form>
+        </div>
+
+        <!-- Info políticas -->
+        <aside class="reservation__info reveal">
+            <div class="info-card">
+                <h3>Información de reserva</h3>
+                <span class="gold-line"></span>
+                <ul>
+                    <li><strong>Horario de reservas:</strong> de 13:00 a 22:30, en turnos de 30 minutos.</li>
+                    <li><strong>Confirmación:</strong> recibirás la confirmación de tu reserva por parte de nuestro equipo.</li>
+                    <li><strong>Grupos grandes:</strong> para más de 12 personas, contáctanos directamente por teléfono.</li>
+                    <li><strong>Cancelaciones:</strong> avísanos con al menos 4 horas de antelación.</li>
+                    <li><strong>Cortesía:</strong> mantenemos tu mesa durante 15 minutos tras la hora reservada.</li>
+                </ul>
+            </div>
+            <div class="info-card info-card--contact">
+                <h3>¿Prefieres llamar?</h3>
+                <span class="gold-line"></span>
+                <p>Nuestro equipo estará encantado de atenderte.</p>
+                <a href="tel:{{ restaurant.phone }}" class="info-card__phone">{{ restaurant.phone }}</a>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}<script src="/static/js/reservations.js"></script>{% endblock %}

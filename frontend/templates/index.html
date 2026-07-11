@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- ==================== HERO ==================== -->
+<section class="hero">
+    <div class="hero__bg"></div>
+    <div class="hero__overlay"></div>
+    <div class="container hero__content">
+        <p class="hero__pre reveal">鯉 · Alta cocina japonesa</p>
+        <h1 class="hero__title reveal">KOI</h1>
+        <p class="hero__slogan reveal">静けさの中の味わい</p>
+        <p class="hero__sub reveal">El sabor en la calma. Una experiencia gastronómica japonesa de autor en Madrid.</p>
+        <div class="hero__actions reveal">
+            <a href="/reservas" class="btn btn--gold">Reservar Mesa</a>
+            <a href="/menu" class="btn btn--ghost">Ver Menú</a>
+        </div>
+    </div>
+    <div class="hero__scroll"><span></span>Descubre</div>
+</section>
+
+<!-- ==================== HISTORIA ==================== -->
+<section class="story section" id="nosotros">
+    <div class="container story__grid">
+        <div class="story__text reveal">
+            <span class="eyebrow">Nuestra filosofía</span>
+            <h2 class="section__title">El arte de lo esencial</h2>
+            <span class="gold-line"></span>
+            <p>En Koi entendemos la cocina como una forma de meditación. Cada corte, cada grano de arroz y cada gota de salsa responden a décadas de tradición japonesa reinterpretada con producto español de temporada.</p>
+            <p>Nuestro maestro sushi selecciona cada mañana el mejor pescado de lonja, respetando el ciclo natural de los mares y honrando la técnica <em>edomae</em> transmitida de generación en generación.</p>
+            <p class="story__signature">Chef Hiro Tanaka · Fundador</p>
+        </div>
+        <div class="story__image reveal">
+            <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=800&q=80" alt="Maestro sushi preparando nigiri" loading="lazy">
+            <span class="story__deco"></span>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== ESPECIALIDADES ==================== -->
+<section class="specials section section--dark">
+    <div class="container">
+        <div class="section__head reveal">
+            <span class="eyebrow eyebrow--center">Selección del chef</span>
+            <h2 class="section__title">Nuestras especialidades</h2>
+            <span class="gold-line gold-line--center"></span>
+        </div>
+        {# Solo platos reales marcados como destacados en la base de datos. #}
+        {# Sin datos mockeados: si no hay destacados, se invita a ver la carta. #}
+        {% if featured_items and featured_items|length > 0 %}
+        <div class="specials__grid">
+            {% for item in featured_items[:4] %}
+            <article class="special-card reveal">
+                <div class="special-card__img"{% if item.image_url %} style="background-image:url('{{ item.image_url }}')"{% endif %}></div>
+                <div class="special-card__body">
+                    <h3 class="special-card__name">{{ item.name }}</h3>
+                    <p class="special-card__desc">{{ item.description }}</p>
+                    <span class="special-card__price">{{ '%.2f'|format(item.price) }} €</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="reveal" style="text-align:center;color:#888;max-width:520px;margin:0 auto 2rem;">
+            Nuestro equipo actualiza la selección del chef con producto de temporada.
+            Descubre la carta completa para ver todas nuestras propuestas.
+        </p>
+        {% endif %}
+        <div class="specials__cta reveal">
+            <a href="/menu" class="btn btn--gold">Explorar carta completa</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== EXPERIENCIA ==================== -->
+<section class="experience section">
+    <div class="container experience__grid">
+        <div class="experience__item reveal">
+            <span class="experience__num">01</span>
+            <h3>Producto de lonja</h3>
+            <p>Seleccionamos cada día el mejor pescado y marisco, priorizando la sostenibilidad y la temporada.</p>
+        </div>
+        <div class="experience__item reveal">
+            <span class="experience__num">02</span>
+            <h3>Maestros artesanos</h3>
+            <p>Un equipo de chefs formados en Japón que dominan la técnica <em>edomae</em> y la cocina kaiseki.</p>
+        </div>
+        <div class="experience__item reveal">
+            <span class="experience__num">03</span>
+            <h3>Ambiente zen</h3>
+            <p>Un espacio minimalista de maderas cálidas, luz tenue y calma, diseñado para desconectar.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== TESTIMONIOS ==================== -->
+<section class="testimonials section section--cream">
+    <div class="container">
+        <div class="section__head reveal">
+            <span class="eyebrow eyebrow--center">Lo que dicen</span>
+            <h2 class="section__title">Experiencias en Koi</h2>
+            <span class="gold-line gold-line--center"></span>
+        </div>
+        <div class="testimonials__grid">
+            <blockquote class="testimonial reveal">
+                <p>«La mejor experiencia japonesa que he vivido fuera de Tokio. El toro se deshace en la boca y el servicio es impecable.»</p>
+                <footer>— Marta Vidal · Crítica gastronómica</footer>
+            </blockquote>
+            <blockquote class="testimonial reveal">
+                <p>«Cada plato es una pequeña obra de arte. El ramen tonkotsu es sencillamente adictivo. Volveremos seguro.»</p>
+                <footer>— Andrés Molina</footer>
+            </blockquote>
+            <blockquote class="testimonial reveal">
+                <p>«Un templo del sabor. La atención al detalle, el ambiente y la calidad del producto están a otro nivel.»</p>
+                <footer>— Sofía Herrera</footer>
+            </blockquote>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== HORARIOS ==================== -->
+<section class="hours section section--dark">
+    <div class="container hours__grid">
+        <div class="hours__text reveal">
+            <span class="eyebrow">Visítanos</span>
+            <h2 class="section__title">Horario de apertura</h2>
+            <span class="gold-line"></span>
+            <p>Recomendamos reservar con antelación, especialmente los fines de semana. Estaremos encantados de recibirte.</p>
+            <a href="/reservas" class="btn btn--gold">Reservar ahora</a>
+        </div>
+        <table class="hours__table reveal">
+            <tbody>
+                <tr><td>Lunes</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
+                <tr><td>Martes</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
+                <tr><td>Miércoles</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
+                <tr><td>Jueves</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
+                <tr><td>Viernes</td><td>13:00 – 16:30 · 20:00 – 00:30</td></tr>
+                <tr><td>Sábado</td><td>13:00 – 16:30 · 20:00 – 00:30</td></tr>
+                <tr><td>Domingo</td><td>13:00 – 16:30</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ==================== UBICACIÓN ==================== -->
+<section class="location section">
+    <div class="container location__grid">
+        <div class="location__info reveal">
+            <span class="eyebrow">Dónde estamos</span>
+            <h2 class="section__title">Ubicación</h2>
+            <span class="gold-line"></span>
+            <ul class="location__list">
+                <li><strong>Dirección</strong>{{ restaurant.address }}</li>
+                <li><strong>Teléfono</strong><a href="tel:{{ restaurant.phone }}">{{ restaurant.phone }}</a></li>
+                <li><strong>Email</strong><a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>
+                <li><strong>Metro</strong>Serrano (L4) · Colón (L4)</li>
+            </ul>
+        </div>
+        <div class="location__map reveal">
+            <div class="location__map-placeholder">
+                <span>鯉</span>
+                <p>Madrid · España</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== CTA FINAL ==================== -->
+<section class="final-cta">
+    <div class="final-cta__overlay"></div>
+    <div class="container final-cta__content reveal">
+        <h2>Reserva tu experiencia en Koi</h2>
+        <p>Deja que nuestro equipo te guíe a través de un viaje de sabores inolvidable.</p>
+        <a href="/reservas" class="btn btn--gold">Reservar Mesa</a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_title %}Reservas · Panel Koi{% endblock %}
+{% block page_title %}Gestión de reservas{% endblock %}
+
+{% block admin_content %}
+<section class="admin-panel">
+    <div class="admin-panel__head">
+        <h2>Todas las reservas</h2>
+        <div class="admin-filters">
+            <select id="statusFilter" class="admin-select">
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendientes</option>
+                <option value="confirmed">Confirmadas</option>
+                <option value="completed">Completadas</option>
+                <option value="cancelled">Canceladas</option>
+            </select>
+            <input type="date" id="dateFilter" class="admin-input">
+            <button class="btn-admin btn-admin--ghost" id="clearFilters">Limpiar</button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Contacto</th>
+                    <th>Pers.</th><th>Estado</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="reservationsTable">
+                <tr><td colspan="7" class="table-empty">Cargando…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Modal de detalle -->
+<div class="modal" id="reservationModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__box">
+        <button class="modal__close" data-close>&times;</button>
+        <h3 class="modal__title">Detalle de la reserva</h3>
+        <div class="modal__body" id="reservationDetail"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}<script>KoiAdmin.initReservations();</script>{% endblock %}

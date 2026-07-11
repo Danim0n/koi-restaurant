@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Pago cancelado · Koi{% endblock %}
+{% block description %}El proceso de pago se ha cancelado.{% endblock %}
+
+{% block content %}
+<section class="section" style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;">
+    <div class="container" style="max-width:600px;">
+        <div style="font-size:4rem;margin-bottom:1rem;">🥢</div>
+        <span class="eyebrow eyebrow--center">Sin cargos</span>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;margin:.5rem 0 1rem;">Pago cancelado</h1>
+        <p style="color:#555;font-size:1.05rem;line-height:1.7;">
+            No se ha realizado ningún cargo. Tu pedido no se ha completado, pero puedes retomarlo
+            cuando quieras desde la carta.
+        </p>
+        <div style="margin-top:2rem;">
+            <a href="/menu" class="btn btn--gold">Volver a la carta</a>
+            <a href="/" class="btn btn--ghost" style="margin-left:.5rem;">Ir al inicio</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

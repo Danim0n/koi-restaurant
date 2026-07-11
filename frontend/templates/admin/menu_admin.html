@@ -1,0 +1,155 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_title %}Menú · Panel Koi{% endblock %}
+{% block page_title %}Gestión del menú{% endblock %}
+
+{% block admin_content %}
+<section class="admin-panel">
+    <div class="admin-panel__head">
+        <h2>Platos del menú</h2>
+        <div class="admin-search-wrap" style="flex: 1; margin: 0 2rem; max-width: 800px;">
+            <input type="text" id="adminSearchInput" placeholder="Buscar plato por nombre..." class="admin-select" style="width: 100%; background: #1a1a1a; color: #fff; padding: 0.6rem 1rem; border-radius: 4px; border: 1px solid #333;">
+        </div>
+        <div class="admin-filters">
+            <select id="categoryFilter" class="admin-select">
+                <option value="">Todas las categorías</option>
+            </select>
+            <button class="btn-admin btn-admin--gold" id="newItemBtn">+ Nuevo plato</button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th><th>Categoría</th><th>Precio</th>
+                    <th>Destacado</th><th>Disponible</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="menuTable">
+                <tr><td colspan="6" class="table-empty">Cargando…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Modal de creación/edición -->
+<div class="modal" id="itemModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__box">
+        <button class="modal__close" data-close>&times;</button>
+        <h3 class="modal__title" id="itemModalTitle">Nuevo plato</h3>
+        <form id="itemForm" class="admin-form">
+            <input type="hidden" id="itemId">
+            <div class="admin-field">
+                <label for="itemName">Nombre *</label>
+                <input type="text" id="itemName" required>
+            </div>
+            <div class="admin-field">
+                <label for="itemCategory">Categoría *</label>
+                <select id="itemCategory" required></select>
+            </div>
+            <div class="admin-field">
+                <label for="itemDescription">Descripción</label>
+                <textarea id="itemDescription" rows="3"></textarea>
+            </div>
+            <div class="admin-form__row">
+                <div class="admin-field">
+                    <label for="itemPrice">Precio (€) *</label>
+                    <input type="number" id="itemPrice" step="0.01" min="0" required>
+                </div>
+                <div class="admin-field">
+                    <label for="itemImageFile">Imagen del plato</label>
+                    <input type="file" id="itemImageFile" accept="image/*" class="admin-input">
+                    <input type="hidden" id="itemImage">
+                </div>
+            </div> <!-- Cierre correcto de admin-form__row -->
+
+            <div class="admin-form__checks">
+                <label class="admin-check"><input type="checkbox" id="itemFeatured"> Destacado</label>
+                <label class="admin-check"><input type="checkbox" id="itemAvailable" checked> Disponible</label>
+            </div>
+            <div class="modal__actions">
+                <button type="button" class="btn-admin btn-admin--ghost" data-close>Cancelar</button>
+                <button type="submit" class="btn-admin btn-admin--gold" id="itemSaveBtn">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de confirmación de borrado -->
+<div class="modal" id="confirmModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__box modal__box--small">
+        <h3 class="modal__title">Confirmar eliminación</h3>
+        <p id="confirmText">¿Seguro que quieres eliminar este plato?</p>
+        <div class="modal__actions">
+            <button type="button" class="btn-admin btn-admin--ghost" data-close>Cancelar</button>
+            <button type="button" class="btn-admin btn-admin--danger" id="confirmDeleteBtn">Eliminar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}
+<script>
+    // =========================================================
+    // 1. LÓGICA DEL BUSCADOR
+    // =========================================================
+    document.body.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'adminSearchInput') {
+            // Función interna para limpiar tildes: convierte "Salmón" en "Salmon"
+            const limpiarAcentos = function(texto) {
+                return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            };
+
+            const termino = limpiarAcentos(e.target.value.toLowerCase().trim());
+            const filas = document.querySelectorAll('#menuTable tr');
+
+            filas.forEach(function (fila) {
+                if (fila.querySelector('.table-empty')) return;
+
+                const nombreCelda = fila.querySelector('td.cell-strong');
+                if (nombreCelda) {
+                    // Limpiamos también el nombre del plato antes de comparar
+                    const nombreTexto = limpiarAcentos(nombreCelda.textContent.toLowerCase());
+                    
+                    if (nombreTexto.includes(termino)) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                }
+            });
+        }
+    });
+
+    // Limpiar el buscador si se cambia el desplegable de categorías
+    const catFilterEl = document.getElementById('categoryFilter');
+    if (catFilterEl) {
+        catFilterEl.addEventListener('change', function() {
+            const buscador = document.getElementById('adminSearchInput');
+            if (buscador) buscador.value = '';
+        });
+    }
+
+    // =========================================================
+    // 2. LÓGICA DE LA IMAGEN
+    // =========================================================
+    document.body.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'itemImageFile') {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    document.getElementById('itemImage').value = reader.result;
+                    alert("¡Imagen cargada en memoria con éxito! Ya puedes dar a Guardar.");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    // 3. Arrancamos el resto del panel
+    KoiAdmin.initMenu();
+</script>
+{% endblock %}
