@@ -57,13 +57,12 @@
                     <label for="itemPrice">Precio (€) *</label>
                     <input type="number" id="itemPrice" step="0.01" min="0" required>
                 </div>
-                <div class="admin-field">
-                    <label for="itemImageFile">Imagen del plato</label>
-                    <input type="file" id="itemImageFile" accept="image/*" class="admin-input">
-                    <input type="hidden" id="itemImage">
-                </div>
-            </div> <!-- Cierre correcto de admin-form__row -->
-
+            </div>
+            <div class="admin-field">
+                <label for="itemImageFile">Imagen del plato</label>
+                <input type="file" id="itemImageFile" accept="image/*" class="admin-input">
+                <input type="hidden" id="itemImage">
+            </div>
             <div class="admin-form__checks">
                 <label class="admin-check"><input type="checkbox" id="itemFeatured"> Destacado</label>
                 <label class="admin-check"><input type="checkbox" id="itemAvailable" checked> Disponible</label>
