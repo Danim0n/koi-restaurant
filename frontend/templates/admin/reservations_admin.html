@@ -23,12 +23,20 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Contacto</th>
-                    <th>Pers.</th><th>Estado</th><th>Acciones</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Contacto</th>
+                    <th>Pers.</th>
+                    <th>Mesa</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="reservationsTable">
-                <tr><td colspan="7" class="table-empty">Cargando…</td></tr>
+                <tr>
+                    <td colspan="7" class="table-empty">Cargando…</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -45,4 +53,5 @@
 </div>
 {% endblock %}
 
-{% block admin_js %}<script>KoiAdmin.initReservations();</script>{% endblock %}
+{% block admin_js %}
+<script>KoiAdmin.initReservations();</script>{% endblock %}

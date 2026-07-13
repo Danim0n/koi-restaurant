@@ -218,7 +218,7 @@ const KoiAdmin = (function () {
                 '<td>' + r.guests + '</td>' +
                 '<td class="cell-muted">' + esc(r.customer_phone) + '</td>' +
                 '<td>' + badgeEstado(r.status) + '</td>' +
-            '</tr>';
+                '</tr>';
         }).join('');
     }
 
@@ -235,7 +235,7 @@ const KoiAdmin = (function () {
                 '<td>' + esc(r.customer_name) + '</td>' +
                 '<td>' + r.guests + '</td>' +
                 '<td>' + badgeEstado(r.status) + '</td>' +
-            '</tr>';
+                '</tr>';
         }).join('');
     }
 
@@ -284,7 +284,7 @@ const KoiAdmin = (function () {
     function pintarReservas(reservas) {
         const tbody = document.getElementById('reservationsTable');
         if (!reservas.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No hay reservas que coincidan.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No hay reservas que coincidan.</td></tr>';
             return;
         }
         tbody.innerHTML = reservas.map(function (r) {
@@ -294,14 +294,15 @@ const KoiAdmin = (function () {
                 '<td>' + esc(r.customer_name) + '</td>' +
                 '<td class="cell-muted">' + esc(r.customer_phone) + '<br>' + esc(r.customer_email) + '</td>' +
                 '<td>' + r.guests + '</td>' +
+                '<td>' + esc(r.table_id) + '</td>' +
                 '<td>' + badgeEstado(r.status) + '</td>' +
                 '<td><div class="row-actions">' +
-                    '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-action="detail" data-id="' + r.id + '">Ver</button>' +
-                    (r.status !== 'confirmed' ? '<button class="btn-admin btn-admin--gold btn-admin--sm" data-action="confirmed" data-id="' + r.id + '">Confirmar</button>' : '') +
-                    (r.status !== 'completed' ? '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-action="completed" data-id="' + r.id + '">Completar</button>' : '') +
-                    (r.status !== 'cancelled' ? '<button class="btn-admin btn-admin--danger btn-admin--sm" data-action="cancelled" data-id="' + r.id + '">Cancelar</button>' : '') +
+                '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-action="detail" data-id="' + r.id + '">Ver</button>' +
+                (r.status !== 'confirmed' ? '<button class="btn-admin btn-admin--gold btn-admin--sm" data-action="confirmed" data-id="' + r.id + '">Confirmar</button>' : '') +
+                (r.status !== 'completed' ? '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-action="completed" data-id="' + r.id + '">Completar</button>' : '') +
+                (r.status !== 'cancelled' ? '<button class="btn-admin btn-admin--danger btn-admin--sm" data-action="cancelled" data-id="' + r.id + '">Cancelar</button>' : '') +
                 '</div></td>' +
-            '</tr>';
+                '</tr>';
         }).join('');
     }
 
@@ -331,13 +332,13 @@ const KoiAdmin = (function () {
             fila('Fecha', r.date) +
             fila('Hora', r.time) +
             fila('Comensales', r.guests) +
-            fila('Mesa', r.table_id ? ('#' + r.table_id) : 'Por asignar') +
+            fila('Mesa', r.table_id ? ('Nº' + r.table_id) : 'Por asignar') +
             fila('Estado', ESTADOS[r.status] || r.status) +
             fila('Peticiones', r.special_requests || '—') +
             '<div class="detail-status-actions">' +
-                '<button class="btn-admin btn-admin--gold btn-admin--sm" data-detail-action="confirmed" data-id="' + r.id + '">Confirmar</button>' +
-                '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-detail-action="completed" data-id="' + r.id + '">Completar</button>' +
-                '<button class="btn-admin btn-admin--danger btn-admin--sm" data-detail-action="cancelled" data-id="' + r.id + '">Cancelar</button>' +
+            '<button class="btn-admin btn-admin--gold btn-admin--sm" data-detail-action="confirmed" data-id="' + r.id + '">Confirmar</button>' +
+            '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-detail-action="completed" data-id="' + r.id + '">Completar</button>' +
+            '<button class="btn-admin btn-admin--danger btn-admin--sm" data-detail-action="cancelled" data-id="' + r.id + '">Cancelar</button>' +
             '</div>';
 
         cont.querySelectorAll('[data-detail-action]').forEach(function (btn) {
@@ -356,7 +357,7 @@ const KoiAdmin = (function () {
     function fila(k, v) { return '<div class="detail-row"><span>' + k + '</span><span>' + esc(v) + '</span></div>'; }
 
     // ---------------------------------------------------------
-    // MENÚ
+    // MENÚ (Con gestión híbrida de categorías en tiempo real)
     // ---------------------------------------------------------
     let categoriasCache = [];
     let itemsCache = [];
@@ -373,19 +374,201 @@ const KoiAdmin = (function () {
         const confirmModal = document.getElementById('confirmModal');
         const fileInput = document.getElementById('itemImageFile');
 
-        // Cargar categorías
-        categoriasCache = await api('/api/menu/categories').then(function (r) { return r.json(); });
-        catFilter.innerHTML = '<option value="">Todas las categorías</option>' +
-            categoriasCache.map(function (c) { return '<option value="' + c.slug + '">' + esc(c.name) + '</option>'; }).join('');
-        itemSelect.innerHTML = categoriasCache.map(function (c) {
-            return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
-        }).join('');
+        // NUEVOS ELEMENTOS DE GESTIÓN DE CATEGORÍAS (MODALES FLOTANTES)
+        const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
+        const manageCategoriesModal = document.getElementById('manageCategoriesModal');
+        const quickCategoriesTable = document.getElementById('quickCategoriesTable');
+        const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
+        const categoryFormModal = document.getElementById('categoryFormModal');
+        const quickCategoryForm = document.getElementById('quickCategoryForm');
+        const quickCategoryId = document.getElementById('quickCategoryId');
+        const quickCategoryFormTitle = document.getElementById('categoryFormTitle');
 
-        // Escucha cuando el administrador selecciona un archivo local
+        // Función reutilizable para recargar los selectors del menú cuando cambian categorías
+        async function cargarYActualizarCategorias() {
+            categoriasCache = await api('/api/menu/categories').then(function (r) { return r.json(); });
+
+            // Guardar selección actual en el formulario para que no se borre al actualizar
+            const seleccionadaActualmente = itemSelect.value;
+
+            // Filtro superior de la pantalla de menú
+            catFilter.innerHTML = '<option value="">Todas las categorías</option>' +
+                categoriasCache.map(function (c) { return '<option value="' + c.slug + '">' + esc(c.name) + '</option>'; }).join('');
+
+            // Selector del modal de platos
+            itemSelect.innerHTML = categoriasCache.map(function (c) {
+                return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
+            }).join('');
+
+            // Restaurar selección si sigue existiendo
+            if (seleccionadaActualmente) {
+                itemSelect.value = seleccionadaActualmente;
+            }
+        }
+
+        // Carga inicial
+        await cargarYActualizarCategorias();
+
+        // ---------------------------------------------------------
+        // EVENTOS DEL SUBMODAL 1: GESTIONAR CATEGORÍAS
+        // ---------------------------------------------------------
+        if (manageCategoriesBtn) {
+            manageCategoriesBtn.addEventListener('click', function () {
+                pintarMiniCategorias();
+                if (manageCategoriesModal) manageCategoriesModal.hidden = false;
+            });
+        }
+
+        function pintarMiniCategorias() {
+            // Las ordenamos por su índice de orden antes de pintar
+            categoriasCache.sort((a, b) => a.order_index - b.order_index);
+
+            if (!categoriasCache.length) {
+                quickCategoriesTable.innerHTML = '<tr><td colspan="4" class="table-empty">No hay categorías.</td></tr>';
+                return;
+            }
+
+            quickCategoriesTable.innerHTML = categoriasCache.map(function (c) {
+                return '<tr>' +
+                    '<td class="cell-strong">' + c.order_index + '</td>' +
+                    '<td><strong>' + esc(c.name) + '</strong></td>' +
+                    '<td>' + (c.is_active ? '<span class="badge badge--yes" style="padding: 0.1rem 0.4rem; font-size:0.75rem;">Sí</span>' : '<span class="badge badge--no" style="padding: 0.1rem 0.4rem; font-size:0.75rem;">No</span>') + '</td>' +
+                    '<td><div class="row-actions" style="gap:0.25rem;">' +
+                    '<button type="button" class="btn-admin btn-admin--ghost btn-admin--sm" data-cat-action="edit" data-id="' + c.id + '" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;">Editar</button>' +
+                    '<button type="button" class="btn-admin btn-admin--danger btn-admin--sm" data-cat-action="delete" data-id="' + c.id + '" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;">Eliminar</button>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        // Delegación de eventos en la minitabla de categorías (Editar / Eliminar)
+        if (quickCategoriesTable) {
+            quickCategoriesTable.addEventListener('click', async function (e) {
+                const btn = e.target.closest('[data-cat-action]');
+                if (!btn) return;
+                const id = parseInt(btn.dataset.id, 10);
+                const action = btn.dataset.catAction; // Usamos camelCase corregido
+
+                if (action === 'edit') {
+                    const cat = categoriasCache.find(x => x.id === id);
+                    if (cat) {
+                        quickCategoryForm.reset();
+                        quickCategoryId.value = cat.id;
+                        quickCategoryFormTitle.textContent = 'Editar Categoría';
+                        document.getElementById('quickCategoryName').value = cat.name;
+                        document.getElementById('quickCategoryDescription').value = cat.description || '';
+                        document.getElementById('quickCategoryOrder').value = cat.order_index;
+                        document.getElementById('quickCategoryActive').checked = cat.is_active;
+                        categoryFormModal.hidden = false;
+                    }
+                } else if (action === 'delete') {
+                    if (confirm('¿Estás seguro de que deseas eliminar esta categoría? Si tiene platos asociados dará error.')) {
+                        try {
+                            const res = await api('/api/menu/categories/' + id, { method: 'DELETE' });
+                            if (res.ok) {
+                                toast('Categoría eliminada.', 'success');
+                                await cargarYActualizarCategorias();
+                                pintarMiniCategorias();
+                            } else {
+                                toast('No se pudo eliminar (verifica que no tenga platos asociados).', 'error');
+                            }
+                        } catch (err) {
+                            toast('Error al procesar la solicitud.', 'error');
+                        }
+                    }
+                }
+            });
+        }
+
+        // ---------------------------------------------------------
+        // EVENTOS DEL SUBMODAL 2: CREAR / EDITAR UNA CATEGORÍA
+        // ---------------------------------------------------------
+        if (addNewCategoryBtn) {
+            addNewCategoryBtn.addEventListener('click', function () {
+                quickCategoryForm.reset();
+                quickCategoryId.value = '';
+                quickCategoryFormTitle.textContent = 'Nueva Categoría';
+                document.getElementById('quickCategoryOrder').value = categoriasCache.length;
+                document.getElementById('quickCategoryActive').checked = true;
+                categoryFormModal.hidden = false;
+            });
+        }
+
+        if (quickCategoryForm) {
+            quickCategoryForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const id = quickCategoryId.value;
+                const nameValue = document.getElementById('quickCategoryName').value.trim();
+
+                // Generamos un slug limpio automáticamente
+                const slugValue = nameValue.toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+
+                const payload = {
+                    name: nameValue,
+                    slug: slugValue,
+                    description: document.getElementById('quickCategoryDescription').value.trim(),
+                    order_index: parseInt(document.getElementById('quickCategoryOrder').value, 10) || 0,
+                    is_active: document.getElementById('quickCategoryActive').checked
+                };
+
+                try {
+                    const url = id ? '/api/menu/categories/' + id : '/api/menu/categories';
+                    const method = id ? 'PUT' : 'POST';
+
+                    const res = await api(url, { method: method, body: JSON.stringify(payload) });
+                    if (res.ok) {
+                        toast(id ? 'Categoría actualizada.' : 'Categoría creada con éxito.', 'success');
+                        categoryFormModal.hidden = true;
+
+                        await cargarYActualizarCategorias();
+                        pintarMiniCategorias();
+
+                        // Si era una nueva categoría, la dejamos ya preseleccionada en el plato
+                        if (!id) {
+                            const nuevaCat = categoriasCache.find(x => x.slug === slugValue);
+                            if (nuevaCat) {
+                                itemSelect.value = nuevaCat.id;
+                            }
+                        }
+                    } else {
+                        toast('Error al guardar la categoría.', 'error');
+                    }
+                } catch (err) {
+                    toast('Error de conexión con el servidor.', 'error');
+                }
+            });
+        }
+
+        // Eventos manuales para cerrar los submodales sin interferir con el del plato
+        const closeManageCategories = document.getElementById('closeManageCategories');
+        if (closeManageCategories) closeManageCategories.addEventListener('click', () => manageCategoriesModal.hidden = true);
+
+        const closeManageCategoriesBtn = document.getElementById('closeManageCategoriesBtn');
+        if (closeManageCategoriesBtn) closeManageCategoriesBtn.addEventListener('click', () => manageCategoriesModal.hidden = true);
+
+        const closeManageModalBtn = document.getElementById('closeManageModalBtn');
+        if (closeManageModalBtn) closeManageModalBtn.addEventListener('click', () => manageCategoriesModal.hidden = true);
+
+        const closeCategoryForm = document.getElementById('closeCategoryForm');
+        if (closeCategoryForm) closeCategoryForm.addEventListener('click', () => categoryFormModal.hidden = true);
+
+        const closeCategoryFormBtn = document.getElementById('closeCategoryFormBtn');
+        if (closeCategoryFormBtn) closeCategoryFormBtn.addEventListener('click', () => categoryFormModal.hidden = true);
+
+        const cancelQuickCategoryBtn = document.getElementById('cancelQuickCategoryBtn');
+        if (cancelQuickCategoryBtn) cancelQuickCategoryBtn.addEventListener('click', () => categoryFormModal.hidden = true);
+
+
+        // =========================================================
+        // LÓGICA ORIGINAL DE PLATOS
+        // =========================================================
         if (fileInput) {
             fileInput.addEventListener('change', function (e) {
                 const file = e.target.files[0];
-                
                 if (file) {
                     const reader = new FileReader();
                     reader.onloadend = function () {
@@ -406,32 +589,24 @@ const KoiAdmin = (function () {
 
         catFilter.addEventListener('change', cargar);
 
-        // 🔍 Filtrar la tabla dinámicamente con el buscador
         const adminSearchInput = document.getElementById('adminSearchInput');
         if (adminSearchInput) {
             adminSearchInput.addEventListener('input', function (e) {
                 const termino = e.target.value.toLowerCase().trim();
-                
-                // Si no hay término, mostramos todos los ítems de la caché
                 if (!termino) {
                     pintarMenu(itemsCache);
                     return;
                 }
-
-                // Filtramos sobre los platos cargados actualmente
                 const filtrados = itemsCache.filter(function (item) {
-                    return item.name.toLowerCase().includes(termino) || 
+                    return item.name.toLowerCase().includes(termino) ||
                         (item.description && item.description.toLowerCase().includes(termino));
                 });
-
                 pintarMenu(filtrados);
             });
         }
 
-        // Nuevo plato
         newBtn.addEventListener('click', function () { abrirModalItem(null); });
 
-        // Tabla: editar / borrar
         document.getElementById('menuTable').addEventListener('click', function (e) {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
@@ -446,7 +621,6 @@ const KoiAdmin = (function () {
             }
         });
 
-        // Confirmar borrado
         document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
             if (itemABorrar == null) return;
             try {
@@ -458,12 +632,9 @@ const KoiAdmin = (function () {
             itemABorrar = null;
         });
 
-        // Guardar (crear / editar)
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             const id = document.getElementById('itemId').value;
-            
-            // Forzamos la captura del valor del input oculto justo ahora
             const base64Image = document.getElementById('itemImage').value;
 
             const payload = {
@@ -471,8 +642,7 @@ const KoiAdmin = (function () {
                 category_id: parseInt(document.getElementById('itemCategory').value, 10),
                 description: document.getElementById('itemDescription').value.trim(),
                 price: parseFloat(document.getElementById('itemPrice').value),
-                // Si está vacío, mandamos null; si tiene el Base64, mandamos el texto completo
-                image_url: base64Image.trim() || null, 
+                image_url: base64Image.trim() || null,
                 is_featured: document.getElementById('itemFeatured').checked,
                 is_available: document.getElementById('itemAvailable').checked
             };
@@ -531,10 +701,10 @@ const KoiAdmin = (function () {
                 '<td>' + (i.is_featured ? '<span class="badge badge--yes">Sí</span>' : '<span class="badge badge--no">No</span>') + '</td>' +
                 '<td>' + (i.is_available ? '<span class="badge badge--yes">Sí</span>' : '<span class="badge badge--no">No</span>') + '</td>' +
                 '<td><div class="row-actions">' +
-                    '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-action="edit" data-id="' + i.id + '">Editar</button>' +
-                    '<button class="btn-admin btn-admin--danger btn-admin--sm" data-action="delete" data-id="' + i.id + '">Eliminar</button>' +
+                '<button class="btn-admin btn-admin--ghost btn-admin--sm" data-action="edit" data-id="' + i.id + '">Editar</button>' +
+                '<button class="btn-admin btn-admin--danger btn-admin--sm" data-action="delete" data-id="' + i.id + '">Eliminar</button>' +
                 '</div></td>' +
-            '</tr>';
+                '</tr>';
         }).join('');
     }
 
