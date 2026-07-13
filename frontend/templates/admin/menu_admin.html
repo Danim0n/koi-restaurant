@@ -141,7 +141,6 @@
                 const reader = new FileReader();
                 reader.onloadend = function () {
                     document.getElementById('itemImage').value = reader.result;
-                    alert("¡Imagen cargada en memoria con éxito! Ya puedes dar a Guardar.");
                 };
                 reader.readAsDataURL(file);
             }
