@@ -80,6 +80,13 @@ def admin_dashboard(request: Request):
     """Dashboard del panel admin (protegido por JS/JWT en el cliente)."""
     return templates.TemplateResponse("admin/dashboard.html", _contexto_base(request))
 
+@router.get("/admin/pedidos", response_class=HTMLResponse)
+def admin_pedidos(request: Request):
+    """Gestión de pedidos (Take Away / Delivery) del panel admin."""
+    contexto = _contexto_base(request)
+    contexto["active_page"] = "pedidos"  # Esto sirve para que el menú lateral sepa cuál marcar como activa
+    return templates.TemplateResponse("admin/orders_admin.html", contexto)
+
 
 @router.get("/admin/menu", response_class=HTMLResponse)
 def admin_menu(request: Request):

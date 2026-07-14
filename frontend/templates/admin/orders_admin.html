@@ -1,0 +1,127 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_title %}Pedidos · Panel Koi{% endblock %}
+{% block page_title %}Gestión de Pedidos Take Away / Delivery{% endblock %}
+
+{% block admin_content %}
+<section class="admin-panel">
+    <div class="admin-panel__head">
+        <h2>Listado de Pedidos</h2>
+        <div class="admin-search-wrap" style="flex: 1; margin: 0 2rem; max-width: 500px;">
+            <input type="text" id="orderSearchInput" placeholder="Buscar por cliente, email o teléfono..."
+                class="admin-select"
+                style="width: 100%; background: #1a1a1a; color: #fff; padding: 0.6rem 1rem; border-radius: 4px; border: 1px solid #333;">
+        </div>
+        <div class="admin-filters">
+            <select id="typeFilter" class="admin-select">
+                <option value="">Todos los tipos</option>
+                <option value="takeaway">Para recoger (Take Away)</option>
+                <option value="delivery">A domicilio (Delivery)</option>
+            </select>
+            <select id="statusFilter" class="admin-select">
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendiente</option>
+                <option value="preparing">En cocina</option>
+                <option value="ready">Listo / Enviado</option>
+                <option value="completed">Entregado</option>
+                <option value="cancelled">Cancelado</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Total</th>
+                    <th>Pago</th>
+                    <th>Estado Pedido</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTable">
+                <tr>
+                    <td colspan="7" class="table-empty">Cargando pedidos…</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Modal de detalle de pedido -->
+<div class="modal" id="orderDetailModal" hidden>
+    <div class="modal__backdrop" id="closeDetailBackdrop"></div>
+    <div class="modal__box modal__box--large">
+        <button class="modal__close" id="closeDetailBtn">&times;</button>
+        <h3 class="modal__title">Detalle del Pedido #<span id="detId"></span></h3>
+
+        <div class="modal__body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="color: var(--color-gold); margin-bottom: 0.5rem;">Datos del Cliente</h4>
+                    <p><strong>Nombre:</strong> <span id="detName"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="detPhone"></span></p>
+                    <p><strong>Email:</strong> <span id="detEmail"></span></p>
+                    <p id="detAddressRow"><strong>Dirección:</strong> <span id="detAddress"></span></p>
+                </div>
+                <div>
+                    <h4 style="color: var(--color-gold); margin-bottom: 0.5rem;">Información del Pedido</h4>
+                    <p><strong>Tipo:</strong> <span id="detType"></span></p>
+                    <p><strong>Notas:</strong> <span id="detNotes" style="font-style: italic;"></span></p>
+                </div>
+            </div>
+
+            <h4 style="color: var(--color-gold); margin-bottom: 0.5rem;">Platos Solicitados</h4>
+            <div class="table-wrap" style="border: 1px solid #333; margin-bottom: 1.5rem;">
+                <table class="admin-table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>Plato</th>
+                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detItemsTable">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </div>
+
+            <form id="orderUpdateForm" class="admin-form">
+                <input type="hidden" id="updateOrderId">
+                <div class="admin-form__row">
+                    <div class="admin-field">
+                        <label for="updateStatus">Estado del Pedido</label>
+                        <select id="updateStatus">
+                            <option value="pending">Pendiente</option>
+                            <option value="preparing">En cocina</option>
+                            <option value="ready">Listo para recoger / En reparto</option>
+                            <option value="completed">Entregado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label for="updatePaymentStatus">Estado del Pago</label>
+                        <select id="updatePaymentStatus">
+                            <option value="pending">Pendiente</option>
+                            <option value="paid">Pagado</option>
+                            <option value="failed">Fallido</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal__actions">
+                    <button type="button" class="btn-admin btn-admin--ghost" id="closeDetailModalBtn">Cerrar</button>
+                    <button type="submit" class="btn-admin btn-admin--gold">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_js %}
+<script>KoiAdmin.initOrders();</script>
+{% endblock %}

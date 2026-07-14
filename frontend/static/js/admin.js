@@ -447,7 +447,7 @@ const KoiAdmin = (function () {
                 const btn = e.target.closest('[data-cat-action]');
                 if (!btn) return;
                 const id = parseInt(btn.dataset.id, 10);
-                const action = btn.dataset.catAction; // Usamos camelCase corregido
+                const action = btn.dataset.catAction;
 
                 if (action === 'edit') {
                     const cat = categoriasCache.find(x => x.id === id);
@@ -500,7 +500,6 @@ const KoiAdmin = (function () {
                 const id = quickCategoryId.value;
                 const nameValue = document.getElementById('quickCategoryName').value.trim();
 
-                // Generamos un slug limpio automáticamente
                 const slugValue = nameValue.toLowerCase()
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/[^a-z0-9\s-]/g, '')
@@ -527,7 +526,6 @@ const KoiAdmin = (function () {
                         await cargarYActualizarCategorias();
                         pintarMiniCategorias();
 
-                        // Si era una nueva categoría, la dejamos ya preseleccionada en el plato
                         if (!id) {
                             const nuevaCat = categoriasCache.find(x => x.slug === slugValue);
                             if (nuevaCat) {
@@ -708,11 +706,181 @@ const KoiAdmin = (function () {
         }).join('');
     }
 
+    // ---------------------------------------------------------
+    // GESTIÓN DE PEDIDOS (Take Away & Delivery)
+    // ---------------------------------------------------------
+    let pedidosCache = [];
+
+    async function initOrders() {
+        if (!initLayout('pedidos')) return;
+
+        const orderSearchInput = document.getElementById('orderSearchInput');
+        const typeFilter = document.getElementById('typeFilter');
+        const statusFilter = document.getElementById('statusFilter');
+
+        async function cargar() {
+            try {
+                const res = await api('/api/orders');
+                if (res.ok) {
+                    pedidosCache = await res.json();
+                    aplicarFiltros();
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                document.getElementById('ordersTable').innerHTML = `
+                    <tr><td colspan="7" class="table-empty" style="color: var(--color-red-light);">Error al cargar los pedidos.</td></tr>
+                `;
+            }
+        }
+
+        function aplicarFiltros() {
+            const texto = orderSearchInput.value.toLowerCase().trim();
+            const tipo = typeFilter.value;
+            const estado = statusFilter.value;
+
+            const filtrados = pedidosCache.filter(p => {
+                const cumpleTexto = p.customer_name.toLowerCase().includes(texto) ||
+                    p.customer_email.toLowerCase().includes(texto) ||
+                    p.customer_phone.includes(texto) ||
+                    String(p.id).includes(texto);
+                const cumpleTipo = !tipo || p.order_type === tipo;
+                const cumpleEstado = !estado || p.status === estado;
+
+                return cumpleTexto && cumpleTipo && cumpleEstado;
+            });
+
+            pintarPedidos(filtrados);
+        }
+
+        orderSearchInput.addEventListener('input', aplicarFiltros);
+        typeFilter.addEventListener('change', aplicarFiltros);
+        statusFilter.addEventListener('change', aplicarFiltros);
+
+        document.getElementById('ordersTable').addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-id]');
+            if (!btn) return;
+            const id = parseInt(btn.dataset.id, 10);
+            verDetallePedido(id);
+        });
+
+        document.getElementById('orderUpdateForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('updateOrderId').value;
+            const status = document.getElementById('updateStatus').value;
+            const payment_status = document.getElementById('updatePaymentStatus').value;
+
+            try {
+                const response = await api(`/api/orders/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status, payment_status })
+                });
+
+                if (response.ok) {
+                    toast('Pedido actualizado con éxito.', 'success');
+                    document.getElementById('orderDetailModal').hidden = true;
+                    cargar();
+                } else {
+                    throw new Error();
+                }
+            } catch (error) {
+                toast('Error al guardar los cambios del pedido.', 'error');
+            }
+        });
+
+        const cerrarModal = () => { document.getElementById('orderDetailModal').hidden = true; };
+        document.getElementById('closeDetailBtn').addEventListener('click', cerrarModal);
+        document.getElementById('closeDetailBackdrop').addEventListener('click', cerrarModal);
+        document.getElementById('closeDetailModalBtn').addEventListener('click', cerrarModal);
+
+        cargar();
+    }
+
+    function pintarPedidos(pedidos) {
+        const tbody = document.getElementById('ordersTable');
+        if (pedidos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="table-empty">No hay pedidos registrados</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = pedidos.map(p => {
+            const badgePago = p.payment_status === 'paid' ? 'badge--confirmed' : 'badge--pending';
+            const badgeStatusMap = {
+                'pending': 'badge--pending',
+                'preparing': 'badge--pending',
+                'ready': 'badge--completed',
+                'completed': 'badge--confirmed',
+                'cancelled': 'badge--cancelled'
+            };
+            const badgeStatus = badgeStatusMap[p.status] || 'badge--info';
+
+            return `
+                <tr>
+                    <td class="cell-strong">#${p.id}</td>
+                    <td style="text-align: left;">
+                        <div class="cell-strong">${esc(p.customer_name)}</div>
+                        <div class="cell-muted">${esc(p.customer_phone)}</div>
+                    </td>
+                    <td>
+                        <span class="badge ${p.order_type === 'takeaway' ? 'badge--completed' : 'badge--info'}" style="background-color: ${p.order_type === 'takeaway' ? '#1c223a' : '#143d24'}">
+                            ${p.order_type === 'takeaway' ? 'Para Recoger' : 'A Domicilio'}
+                        </span>
+                    </td>
+                    <td class="cell-strong">${precio(p.total)}</td>
+                    <td><span class="badge ${badgePago}">${p.payment_status.toUpperCase()}</span></td>
+                    <td><span class="badge ${badgeStatus}">${p.status.toUpperCase()}</span></td>
+                    <td>
+                        <div class="row-actions">
+                            <button class="btn-admin btn-admin--gold btn-admin--sm" data-id="${p.id}">Detalle</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function verDetallePedido(id) {
+        const p = pedidosCache.find(item => item.id === id);
+        if (!p) return;
+
+        document.getElementById('detId').textContent = p.id;
+        document.getElementById('detName').textContent = p.customer_name;
+        document.getElementById('detPhone').textContent = p.customer_phone;
+        document.getElementById('detEmail').textContent = p.customer_email;
+        document.getElementById('detType').textContent = p.order_type === 'takeaway' ? 'Para Recoger (Take Away)' : 'A Domicilio';
+        document.getElementById('detNotes').textContent = p.notes || 'Sin comentarios adicionales.';
+
+        const addressRow = document.getElementById('detAddressRow');
+        if (p.order_type === 'delivery') {
+            addressRow.style.display = 'block';
+            document.getElementById('detAddress').textContent = p.address || 'No especificada';
+        } else {
+            addressRow.style.display = 'none';
+        }
+
+        const itemsTbody = document.getElementById('detItemsTable');
+        itemsTbody.innerHTML = p.items.map(it => `
+            <tr>
+                <td style="text-align: left;" class="cell-strong">${esc(it.name)}</td>
+                <td>${precio(it.unit_price)}</td>
+                <td>${it.quantity}</td>
+                <td class="cell-strong">${precio(it.unit_price * it.quantity)}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('updateOrderId').value = p.id;
+        document.getElementById('updateStatus').value = p.status;
+        document.getElementById('updatePaymentStatus').value = p.payment_status;
+
+        document.getElementById('orderDetailModal').hidden = false;
+    }
+
     // API pública del módulo
     return {
         initLogin: initLogin,
         initDashboard: initDashboard,
         initReservations: initReservations,
-        initMenu: initMenu
+        initMenu: initMenu,
+        initOrders: initOrders
     };
 })();
