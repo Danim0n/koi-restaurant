@@ -25,12 +25,14 @@
             <span class="eyebrow">Nuestra filosofía</span>
             <h2 class="section__title">El arte de lo esencial</h2>
             <span class="gold-line"></span>
-            <p>En Koi entendemos la cocina como una forma de meditación. Cada corte, cada grano de arroz y cada gota de salsa responden a décadas de tradición japonesa reinterpretada con producto español de temporada.</p>
-            <p>Nuestro maestro sushi selecciona cada mañana el mejor pescado de lonja, respetando el ciclo natural de los mares y honrando la técnica <em>edomae</em> transmitida de generación en generación.</p>
-            <p class="story__signature">Chef Hiro Tanaka · Fundador</p>
+            <p>En Koi entendemos la cocina como una forma de meditación. Cada corte, cada grano de arroz y cada gota de
+                salsa responden a décadas de tradición japonesa reinterpretada con producto español de temporada.</p>
+            <p>Nuestro maestro sushi selecciona cada mañana el mejor pescado de lonja, respetando el ciclo natural de
+                los mares y honrando la técnica <em>edomae</em> transmitida de generación en generación.</p>
         </div>
         <div class="story__image reveal">
-            <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=800&q=80" alt="Maestro sushi preparando nigiri" loading="lazy">
+            <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=800&q=80"
+                alt="Maestro sushi preparando nigiri" loading="lazy">
             <span class="story__deco"></span>
         </div>
     </div>
@@ -50,7 +52,8 @@
         <div class="specials__grid">
             {% for item in featured_items[:4] %}
             <article class="special-card reveal">
-                <div class="special-card__img"{% if item.image_url %} style="background-image:url('{{ item.image_url }}')"{% endif %}></div>
+                <div class="special-card__img" {% if item.image_url %}
+                    style="background-image:url('{{ item.image_url }}')" {% endif %}></div>
                 <div class="special-card__body">
                     <h3 class="special-card__name">{{ item.name }}</h3>
                     <p class="special-card__desc">{{ item.description }}</p>
@@ -75,17 +78,14 @@
 <section class="experience section">
     <div class="container experience__grid">
         <div class="experience__item reveal">
-            <span class="experience__num">01</span>
             <h3>Producto de lonja</h3>
             <p>Seleccionamos cada día el mejor pescado y marisco, priorizando la sostenibilidad y la temporada.</p>
         </div>
         <div class="experience__item reveal">
-            <span class="experience__num">02</span>
             <h3>Maestros artesanos</h3>
-            <p>Un equipo de chefs formados en Japón que dominan la técnica <em>edomae</em> y la cocina kaiseki.</p>
+            <p>Un equipo de chefs que dominan la técnica <em>edomae</em> y la cocina kaiseki.</p>
         </div>
         <div class="experience__item reveal">
-            <span class="experience__num">03</span>
             <h3>Ambiente zen</h3>
             <p>Un espacio minimalista de maderas cálidas, luz tenue y calma, diseñado para desconectar.</p>
         </div>
@@ -102,16 +102,21 @@
         </div>
         <div class="testimonials__grid">
             <blockquote class="testimonial reveal">
-                <p>«La mejor experiencia japonesa que he vivido fuera de Tokio. El toro se deshace en la boca y el servicio es impecable.»</p>
-                <footer>— Marta Vidal · Crítica gastronómica</footer>
+                <p>«Mi pareja y yo venimos mucho a cenar aquí y nos parece un sitio increíble. Comida de calidad, de los
+                    mejores sushis que hemos probado. Recibimos muy buen trato de los camareros, sobretodo de la
+                    camarera Dara, siempre está atenta de todo.»</p>
+                <footer>— Marta</footer>
             </blockquote>
             <blockquote class="testimonial reveal">
-                <p>«Cada plato es una pequeña obra de arte. El ramen tonkotsu es sencillamente adictivo. Volveremos seguro.»</p>
-                <footer>— Andrés Molina</footer>
+                <p>«Mi restaurante favorito, la atención es excepcional, rapido, limpio y generoso. Las raciones son
+                    bastante generosas y su precio competitivo. El pollo al limón está espectacular.»</p>
+                <footer>— Cristobal</footer>
             </blockquote>
             <blockquote class="testimonial reveal">
-                <p>«Un templo del sabor. La atención al detalle, el ambiente y la calidad del producto están a otro nivel.»</p>
-                <footer>— Sofía Herrera</footer>
+                <p>«Nos encantó la experiencia en el restaurante. La atención estupenda y muy buen ambiente. Nos
+                    sentamos en la terraza, lo cual resultó agradable. Desde el sushi hasta sus platos fuertes, todo
+                    estaba muy rico y fresco. Repetiremos seguro.»</p>
+                <footer>— Andrea</footer>
             </blockquote>
         </div>
     </div>
@@ -124,18 +129,40 @@
             <span class="eyebrow">Visítanos</span>
             <h2 class="section__title">Horario de apertura</h2>
             <span class="gold-line"></span>
-            <p>Recomendamos reservar con antelación, especialmente los fines de semana. Estaremos encantados de recibirte.</p>
+            <p>Recomendamos reservar con antelación, especialmente los fines de semana. Estaremos encantados de
+                recibirte.</p>
             <a href="/reservas" class="btn btn--gold">Reservar ahora</a>
         </div>
         <table class="hours__table reveal">
             <tbody>
-                <tr><td>Lunes</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
-                <tr><td>Martes</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
-                <tr><td>Miércoles</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
-                <tr><td>Jueves</td><td>13:00 – 16:00 · 20:00 – 23:30</td></tr>
-                <tr><td>Viernes</td><td>13:00 – 16:30 · 20:00 – 00:30</td></tr>
-                <tr><td>Sábado</td><td>13:00 – 16:30 · 20:00 – 00:30</td></tr>
-                <tr><td>Domingo</td><td>13:00 – 16:30</td></tr>
+                <tr>
+                    <td>Lunes</td>
+                    <td>12:00 - 16:00 · 20:00 - 23:00</td>
+                </tr>
+                <tr>
+                    <td>Martes</td>
+                    <td>Cerrado</td>
+                </tr>
+                <tr>
+                    <td>Miércoles</td>
+                    <td>12:00 - 16:00 · 20:00 - 23:00</td>
+                </tr>
+                <tr>
+                    <td>Jueves</td>
+                    <td>12:00 - 16:00 · 20:00 - 23:00</td>
+                </tr>
+                <tr>
+                    <td>Viernes</td>
+                    <td>12:00 - 16:30 · 20:00 - 23:00</td>
+                </tr>
+                <tr>
+                    <td>Sábado</td>
+                    <td>12:00 - 16:30 · 20:00 - 23:00</td>
+                </tr>
+                <tr>
+                    <td>Domingo</td>
+                    <td>12:00 - 16:30 · 20:00 - 23:00</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -152,7 +179,6 @@
                 <li><strong>Dirección</strong>{{ restaurant.address }}</li>
                 <li><strong>Teléfono</strong><a href="tel:{{ restaurant.phone }}">{{ restaurant.phone }}</a></li>
                 <li><strong>Email</strong><a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>
-                <li><strong>Metro</strong>Serrano (L4) · Colón (L4)</li>
             </ul>
         </div>
         <div class="location__map reveal">

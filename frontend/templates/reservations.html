@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block title %}Reservas · Koi Restaurante Japonés{% endblock %}
-{% block description %}Reserva tu mesa en Koi de forma rápida y sencilla. Vive una experiencia gastronómica japonesa premium en Madrid.{% endblock %}
+{% block description %}Reserva tu mesa en Koi de forma rápida y sencilla. Vive una experiencia gastronómica japonesa
+premium en Talavera de la Reina.{% endblock %}
 
 {% block content %}
 <header class="page-header">
@@ -21,7 +22,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="name">Nombre completo *</label>
-                        <input type="text" id="name" name="customer_name" required minlength="2" placeholder="Tu nombre">
+                        <input type="text" id="name" name="customer_name" required minlength="2"
+                            placeholder="Tu nombre">
                         <span class="form-error" data-for="name"></span>
                     </div>
                     <div class="form-group">
@@ -63,7 +65,8 @@
 
                 <div class="form-group">
                     <label for="requests">Comentarios o peticiones especiales</label>
-                    <textarea id="requests" name="special_requests" rows="3" placeholder="Alergias, celebración, preferencias de mesa…"></textarea>
+                    <textarea id="requests" name="special_requests" rows="3"
+                        placeholder="Alergias, celebración, preferencias de mesa…"></textarea>
                 </div>
 
                 <button type="submit" class="btn btn--gold btn--block" id="submitBtn">Confirmar reserva</button>
@@ -79,8 +82,10 @@
                 <span class="gold-line"></span>
                 <ul>
                     <li><strong>Horario de reservas:</strong> de 13:00 a 22:30, en turnos de 30 minutos.</li>
-                    <li><strong>Confirmación:</strong> recibirás la confirmación de tu reserva por parte de nuestro equipo.</li>
-                    <li><strong>Grupos grandes:</strong> para más de 12 personas, contáctanos directamente por teléfono.</li>
+                    <li><strong>Confirmación:</strong> recibirás la confirmación de tu reserva por parte de nuestro
+                        equipo.</li>
+                    <li><strong>Grupos grandes:</strong> para más de 12 personas, contáctanos directamente por teléfono.
+                    </li>
                     <li><strong>Cancelaciones:</strong> avísanos con al menos 4 horas de antelación.</li>
                     <li><strong>Cortesía:</strong> mantenemos tu mesa durante 15 minutos tras la hora reservada.</li>
                 </ul>
@@ -96,4 +101,5 @@
 </section>
 {% endblock %}
 
-{% block extra_js %}<script src="/static/js/reservations.js"></script>{% endblock %}
+{% block extra_js %}
+<script src="/static/js/reservations.js"></script>{% endblock %}

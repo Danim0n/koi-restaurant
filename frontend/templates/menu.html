@@ -92,6 +92,13 @@ elaborados con producto de temporada.{% endblock %}
         <div class="cart-summary__row" id="sumDeliveryRow"><span>Envío</span><span id="sumDelivery">0,00 €</span></div>
         <div class="cart-summary__row cart-summary__row--total"><span>Total</span><span id="sumTotal">0,00 €</span>
         </div>
+
+        <!-- Mensaje de aviso de cierre (oculto por defecto) -->
+        <p id="cartClosedNotice"
+            style="color: #c93b3b; font-size: 0.9rem; text-align: center; margin: 0.5rem 0; font-weight: 500;" hidden>
+            El restaurante está cerrado los martes. No se pueden procesar pedidos hoy.
+        </p>
+
         <button class="btn btn--gold cart-checkout-btn" id="cartCheckoutBtn">Finalizar y pagar</button>
     </div>
 </aside>
@@ -172,4 +179,30 @@ elaborados con producto de temporada.{% endblock %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/menu.js"></script>{% endblock %}
+<script>
+    (function () {
+        document.addEventListener("DOMContentLoaded", function () {
+            // Obtenemos el día de la semana actual (0 = Domingo, 1 = Lunes, 2 = Martes...)
+            const hoy = new Date();
+            if (hoy.getDay() === 2) {
+                const btnCheckout = document.getElementById('cartCheckoutBtn');
+                const noticeClosed = document.getElementById('cartClosedNotice');
+
+                if (btnCheckout) {
+                    btnCheckout.disabled = true;
+                    btnCheckout.textContent = "Cerrado por descanso";
+                    // Le damos un estilo visual de deshabilitado por si acaso
+                    btnCheckout.style.opacity = "0.5";
+                    btnCheckout.style.cursor = "not-allowed";
+                    btnCheckout.style.pointerEvents = "none";
+                }
+
+                if (noticeClosed) {
+                    noticeClosed.hidden = false;
+                }
+            }
+        });
+    })();
+</script>
+<script src="/static/js/menu.js"></script>
+{% endblock %}

@@ -11,15 +11,15 @@ class Settings(BaseSettings):
     # Seguridad / JWT
     SECRET_KEY: str = "koi-super-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 horas
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 15  # 24 horas
 
     # Base de datos
     DATABASE_URL: str = "sqlite:///./koi.db"
 
     # Información del restaurante
     RESTAURANT_NAME: str = "Koi"
-    RESTAURANT_ADDRESS: str = "Calle Ejemplo 123, Madrid"
-    RESTAURANT_PHONE: str = "+34 91 234 56 78"
+    RESTAURANT_ADDRESS: str = "Av. Castilla la Mancha, 10, 45600 Talavera de la Reina, Toledo"
+    RESTAURANT_PHONE: str = "+34 698 37 46 68"
     RESTAURANT_EMAIL: str = "hola@koi.es"
 
     # Credenciales del administrador por defecto (se crean en el bootstrap)

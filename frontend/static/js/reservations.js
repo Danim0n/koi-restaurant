@@ -51,6 +51,12 @@
         date: function (v) {
             if (!v) return 'Selecciona una fecha.';
             if (v < hoyStr) return 'La fecha no puede ser anterior a hoy.';
+
+            // Forzamos la lectura en formato UTC para evitar desfases de zona horaria
+            const fechaSeleccionada = new Date(v);
+            if (fechaSeleccionada.getUTCDay() === 2) {
+                return 'El restaurante permanece cerrado los martes por descanso. Perdone las molestias';
+            }
             return '';
         },
         time: function (v) { return v ? '' : 'Selecciona una hora.'; },
