@@ -9,7 +9,8 @@
         <p class="hero__pre reveal">鯉 · Alta cocina japonesa</p>
         <h1 class="hero__title reveal">KOI</h1>
         <p class="hero__slogan reveal">静けさの中の味わい</p>
-        <p class="hero__sub reveal">El sabor en la calma. Una experiencia gastronómica japonesa de autor en Madrid.</p>
+        <p class="hero__sub reveal">El sabor en la calma. Una experiencia gastronómica japonesa de autor en Talavera de
+            la Reina.</p>
         <div class="hero__actions reveal">
             <a href="/reservas" class="btn btn--gold">Reservar Mesa</a>
             <a href="/menu" class="btn btn--ghost">Ver Menú</a>
@@ -46,8 +47,6 @@
             <h2 class="section__title">Nuestras especialidades</h2>
             <span class="gold-line gold-line--center"></span>
         </div>
-        {# Solo platos reales marcados como destacados en la base de datos. #}
-        {# Sin datos mockeados: si no hay destacados, se invita a ver la carta. #}
         {% if featured_items and featured_items|length > 0 %}
         <div class="specials__grid">
             {% for item in featured_items[:4] %}
@@ -181,11 +180,13 @@
                 <li><strong>Email</strong><a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>
             </ul>
         </div>
-        <div class="location__map reveal">
-            <div class="location__map-placeholder">
-                <span>鯉</span>
-                <p>Madrid · España</p>
-            </div>
+        <div class="location__map reveal"
+            style="height: 100%; min-height: 400px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3058.1641475600304!2d-4.824833223509695!3d39.96008258330508!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd401c08f36b94dd%3A0x245fb33d4bf54dd8!2zS2_DrQ!5e0!3m2!1ses!2ses!4v1784409504817!5m2!1ses!2ses"
+                width="100%" height="100%" style="border:0; min-height: 400px; display: block;" allowfullscreen=""
+                loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
         </div>
     </div>
 </section>

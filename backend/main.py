@@ -61,7 +61,7 @@ def on_startup():
     """Crea las tablas y siembra datos de demostración si es necesario."""
     from seed_data import init_db
 
-    init_db()
+    #init_db()
 
 
 @app.get("/api/health", tags=["Sistema"])
