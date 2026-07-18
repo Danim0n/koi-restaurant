@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% block admin_title %}Pedidos · Panel Koi{% endblock %}
-{% block page_title %}Gestión de Pedidos Take Away / Delivery{% endblock %}
+{% block page_title %}Gestión de Pedidos <span id="ordersWorkloadCounter" class="workload-badge"></span>{% endblock %}
 
 {% block admin_content %}
 <section class="admin-panel">
@@ -25,6 +25,7 @@
                 <option value="ready">Listo / Enviado</option>
                 <option value="completed">Entregado</option>
                 <option value="cancelled">Cancelado</option>
+                <option value="out_for_delivery">En reparto</option>
             </select>
         </div>
     </div>
@@ -94,21 +95,22 @@
                 <input type="hidden" id="updateOrderId">
                 <div class="admin-form__row">
                     <div class="admin-field">
-                        <label for="updateStatus">Estado del Pedido</label>
-                        <select id="updateStatus">
-                            <option value="pending">Pendiente</option>
-                            <option value="preparing">En cocina</option>
-                            <option value="ready">Listo para recoger / En reparto</option>
-                            <option value="completed">Entregado</option>
-                            <option value="cancelled">Cancelado</option>
+                        <label for="updatePaymentStatus">Estado del Pago</label>
+                        <select id="updatePaymentStatus" name="payment_status">
+                            <option value="unpaid">No pagado</option>
+                            <option value="paid">Pagado</option>
+                            <option value="refunded">Reembolsado</option>
                         </select>
                     </div>
                     <div class="admin-field">
-                        <label for="updatePaymentStatus">Estado del Pago</label>
-                        <select id="updatePaymentStatus">
+                        <label for="updateStatus">Estado del Pedido</label>
+                        <select id="updateStatus" name="status">
                             <option value="pending">Pendiente</option>
-                            <option value="paid">Pagado</option>
-                            <option value="failed">Fallido</option>
+                            <option value="preparing">En preparación</option>
+                            <option value="ready">Listo para recoger/enviar</option>
+                            <option value="out_for_delivery">En reparto</option>
+                            <option value="delivered">Entregado</option>
+                            <option value="cancelled">Cancelado</option>
                         </select>
                     </div>
                 </div>

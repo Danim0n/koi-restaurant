@@ -551,30 +551,63 @@ textarea {
     white-space: nowrap;
 }
 
+/* PENDIENTE: Tono dorado/crema suave, a la espera de ser aceptado */
 .badge--pending {
-    background: rgba(212, 175, 55, .15);
-    color: var(--color-gold-light);
-    border: 1px solid rgba(212, 175, 55, .4);
+    background: rgba(245, 240, 232, 0.08);
+    color: var(--admin-text);
+    border: 1px solid var(--admin-border);
 }
 
+/* EN PREPARACIÓN: Naranja/Oro vibrante pero sutil, transmite actividad en cocina */
+.badge--preparing {
+    background: rgba(212, 175, 55, 0.12);
+    color: var(--color-gold-light);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+/* LISTO: Azul cian/turquesa, refrescante y limpio para indicar plato terminado */
+.badge--ready {
+    background: rgba(6, 182, 212, 0.15);
+    color: #a5f3fc;
+    border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+/* EN REPARTO: Índigo/Lila, asociado al movimiento y la logística */
+.badge--out_for_delivery {
+    background: rgba(99, 102, 241, 0.15);
+    color: #c7d2fe;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+/* CONFIRMADO / PAGADO: Verde esmeralda que transmite éxito seguro */
 .badge--confirmed {
     background: rgba(46, 160, 90, .15);
     color: #6ede9b;
     border: 1px solid rgba(46, 160, 90, .4);
 }
 
+/* COMPLETADO: Azul clásico, cierra el ciclo del flujo del pedido */
 .badge--completed {
     background: rgba(90, 120, 200, .15);
     color: #9bb2f0;
     border: 1px solid rgba(90, 120, 200, .4);
 }
 
+/* CANCELADO: Rojo carmín de Koi, aviso visual claro de error o anulación */
 .badge--cancelled {
     background: rgba(196, 30, 58, .15);
     color: #f0919c;
     border: 1px solid rgba(196, 30, 58, .4);
 }
 
+/* REEMBOLSADO: Gris ceniza, neutraliza el estado tras solucionar una incidencia */
+.badge--refunded {
+    background: rgba(156, 163, 175, 0.12);
+    color: #d1d5db;
+    border: 1px solid rgba(156, 163, 175, 0.35);
+}
+
+/* Binarios (Sí / No) */
 .badge--yes {
     background: rgba(46, 160, 90, .15);
     color: #6ede9b;
@@ -800,6 +833,73 @@ textarea {
     to {
         opacity: 0;
         transform: translateX(40px);
+    }
+}
+
+/* ============================================================
+   NOTIFICACIONES DEL ADMIN
+   ============================================================ */
+
+.workload-badge {
+    background-color: #333333;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Lato', sans-serif;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 500px;
+    margin-left: 12px;
+    border: 1px solid #444;
+    vertical-align: middle;
+    margin-left: 350px;
+    padding: 8px;
+
+    display: none;
+}
+
+.sidebar-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* El círculo de notificación */
+/* El círculo de notificación */
+.badge-notification {
+    background-color: #ff4d4d;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: bold;
+    min-width: 23px;
+    height: 23px;
+    padding: 0 5px;
+    border-radius: 50px;
+
+    /* CAMBIO AQUÍ: Empieza totalmente oculto por defecto */
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    animation: pulse-badge 2s infinite;
+}
+
+/* Animación opcional para captar la atención del admin */
+@keyframes pulse-badge {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
     }
 }
 

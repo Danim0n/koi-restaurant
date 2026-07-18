@@ -69,9 +69,13 @@ const KoiAdmin = (function () {
     // ---------------------------------------------------------
     const ESTADOS = {
         pending: 'Pendiente',
-        confirmed: 'Confirmada',
-        completed: 'Completada',
-        cancelled: 'Cancelada'
+        preparing: 'En Preparación',
+        ready: 'Listo',
+        out_for_delivery: 'En Reparto',
+        delivered: 'Entregado',
+        cancelled: 'Cancelado',
+        completed: 'Completado',
+        confirmed: 'Confirmado',
     };
     function badgeEstado(estado) {
         return '<span class="badge badge--' + estado + '">' + (ESTADOS[estado] || estado) + '</span>';
@@ -83,10 +87,8 @@ const KoiAdmin = (function () {
     // Layout admin común (sidebar, logout, usuario, active link)
     // ---------------------------------------------------------
     function initLayout(paginaActiva) {
-        // Guard: verificar token
         if (!getToken()) { location.href = '/admin'; return false; }
 
-        // Verificar validez del token contra la API
         api('/api/auth/me').then(function (res) {
             if (res.ok) {
                 res.json().then(function (user) {
@@ -95,33 +97,28 @@ const KoiAdmin = (function () {
                     if (uEl) uEl.textContent = user.name + ' · Admin';
                 });
             }
-        }).catch(function () { /* api ya redirige */ });
+        }).catch(function () { });
 
-        // Mostrar usuario guardado inmediatamente
         const user = getUser();
         const uEl = document.getElementById('adminUser');
         if (uEl && user) uEl.textContent = user.name + ' · Admin';
 
-        // Marcar link activo
         document.querySelectorAll('.admin-nav-link[data-page]').forEach(function (l) {
             if (l.dataset.page === paginaActiva) l.classList.add('is-active');
         });
 
-        // Logout
         const logout = document.getElementById('logoutBtn');
         if (logout) logout.addEventListener('click', function () {
             clearSession();
             location.href = '/admin';
         });
 
-        // Toggle sidebar móvil
         const toggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('adminSidebar');
         if (toggle && sidebar) toggle.addEventListener('click', function () {
             sidebar.classList.toggle('is-open');
         });
 
-        // Cerrar modales genéricos
         document.querySelectorAll('[data-close]').forEach(function (el) {
             el.addEventListener('click', function () {
                 const modal = el.closest('.modal');
@@ -136,7 +133,6 @@ const KoiAdmin = (function () {
     // LOGIN
     // ---------------------------------------------------------
     function initLogin() {
-        // Si ya hay sesión, ir al dashboard
         if (getToken()) { location.href = '/admin/dashboard'; return; }
 
         const form = document.getElementById('loginForm');
@@ -215,8 +211,8 @@ const KoiAdmin = (function () {
             return '<tr>' +
                 '<td class="cell-strong">' + esc(r.time) + '</td>' +
                 '<td>' + esc(r.customer_name) + '</td>' +
-                '<td>' + r.guests + '</td>' +
                 '<td class="cell-muted">' + esc(r.customer_phone) + '</td>' +
+                '<td>' + r.guests + '</td>' +
                 '<td>' + badgeEstado(r.status) + '</td>' +
                 '</tr>';
         }).join('');
@@ -251,15 +247,19 @@ const KoiAdmin = (function () {
         const dateFilter = document.getElementById('dateFilter');
         const clearBtn = document.getElementById('clearFilters');
 
+        // Busca esto dentro de initReservations y déjalo limpio para que cargue reservas:
         async function cargar() {
-            const params = new URLSearchParams();
-            if (statusFilter.value) params.append('status', statusFilter.value);
-            if (dateFilter.value) params.append('date', dateFilter.value);
-            const url = '/api/reservations' + (params.toString() ? '?' + params.toString() : '');
             try {
-                reservasCache = await api(url).then(function (r) { return r.json(); });
-                pintarReservas(reservasCache);
-            } catch (err) { console.error(err); }
+                const res = await api('/api/reservations'); // Cambiado a su endpoint correcto si corresponde
+                if (res.ok) {
+                    reservasCache = await res.json();
+                    pintarReservas(reservasCache);
+                } else { throw new Error(); }
+            } catch (err) {
+                document.getElementById('reservationsTable').innerHTML = `
+            <tr><td colspan="8" class="table-empty" style="color: var(--color-red-light);">Error al cargar las reservas.</td></tr>
+        `;
+            }
         }
 
         statusFilter.addEventListener('change', cargar);
@@ -268,7 +268,6 @@ const KoiAdmin = (function () {
             statusFilter.value = ''; dateFilter.value = ''; cargar();
         });
 
-        // Delegación de eventos en la tabla
         document.getElementById('reservationsTable').addEventListener('click', function (e) {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
@@ -345,7 +344,6 @@ const KoiAdmin = (function () {
             btn.addEventListener('click', function () {
                 cambiarEstado(parseInt(btn.dataset.id, 10), btn.dataset.detailAction, function () {
                     document.getElementById('reservationModal').hidden = true;
-                    // recargar tabla
                     const sf = document.getElementById('statusFilter');
                     sf.dispatchEvent(new Event('change'));
                 });
@@ -357,7 +355,7 @@ const KoiAdmin = (function () {
     function fila(k, v) { return '<div class="detail-row"><span>' + k + '</span><span>' + esc(v) + '</span></div>'; }
 
     // ---------------------------------------------------------
-    // MENÚ (Con gestión híbrida de categorías en tiempo real)
+    // MENÚ (Categorías + Platos)
     // ---------------------------------------------------------
     let categoriasCache = [];
     let itemsCache = [];
@@ -374,7 +372,6 @@ const KoiAdmin = (function () {
         const confirmModal = document.getElementById('confirmModal');
         const fileInput = document.getElementById('itemImageFile');
 
-        // NUEVOS ELEMENTOS DE GESTIÓN DE CATEGORÍAS (MODALES FLOTANTES)
         const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
         const manageCategoriesModal = document.getElementById('manageCategoriesModal');
         const quickCategoriesTable = document.getElementById('quickCategoriesTable');
@@ -384,34 +381,22 @@ const KoiAdmin = (function () {
         const quickCategoryId = document.getElementById('quickCategoryId');
         const quickCategoryFormTitle = document.getElementById('categoryFormTitle');
 
-        // Función reutilizable para recargar los selectors del menú cuando cambian categorías
         async function cargarYActualizarCategorias() {
             categoriasCache = await api('/api/menu/categories').then(function (r) { return r.json(); });
-
-            // Guardar selección actual en el formulario para que no se borre al actualizar
             const seleccionadaActualmente = itemSelect.value;
 
-            // Filtro superior de la pantalla de menú
             catFilter.innerHTML = '<option value="">Todas las categorías</option>' +
                 categoriasCache.map(function (c) { return '<option value="' + c.slug + '">' + esc(c.name) + '</option>'; }).join('');
 
-            // Selector del modal de platos
             itemSelect.innerHTML = categoriasCache.map(function (c) {
                 return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
             }).join('');
 
-            // Restaurar selección si sigue existiendo
-            if (seleccionadaActualmente) {
-                itemSelect.value = seleccionadaActualmente;
-            }
+            if (seleccionadaActualmente) { itemSelect.value = seleccionadaActualmente; }
         }
 
-        // Carga inicial
         await cargarYActualizarCategorias();
 
-        // ---------------------------------------------------------
-        // EVENTOS DEL SUBMODAL 1: GESTIONAR CATEGORÍAS
-        // ---------------------------------------------------------
         if (manageCategoriesBtn) {
             manageCategoriesBtn.addEventListener('click', function () {
                 pintarMiniCategorias();
@@ -420,14 +405,11 @@ const KoiAdmin = (function () {
         }
 
         function pintarMiniCategorias() {
-            // Las ordenamos por su índice de orden antes de pintar
             categoriasCache.sort((a, b) => a.order_index - b.order_index);
-
             if (!categoriasCache.length) {
                 quickCategoriesTable.innerHTML = '<tr><td colspan="4" class="table-empty">No hay categorías.</td></tr>';
                 return;
             }
-
             quickCategoriesTable.innerHTML = categoriasCache.map(function (c) {
                 return '<tr>' +
                     '<td class="cell-strong">' + c.order_index + '</td>' +
@@ -441,7 +423,6 @@ const KoiAdmin = (function () {
             }).join('');
         }
 
-        // Delegación de eventos en la minitabla de categorías (Editar / Eliminar)
         if (quickCategoriesTable) {
             quickCategoriesTable.addEventListener('click', async function (e) {
                 const btn = e.target.closest('[data-cat-action]');
@@ -472,17 +453,12 @@ const KoiAdmin = (function () {
                             } else {
                                 toast('No se pudo eliminar (verifica que no tenga platos asociados).', 'error');
                             }
-                        } catch (err) {
-                            toast('Error al procesar la solicitud.', 'error');
-                        }
+                        } catch (err) { toast('Error al procesar la solicitud.', 'error'); }
                     }
                 }
             });
         }
 
-        // ---------------------------------------------------------
-        // EVENTOS DEL SUBMODAL 2: CREAR / EDITAR UNA CATEGORÍA
-        // ---------------------------------------------------------
         if (addNewCategoryBtn) {
             addNewCategoryBtn.addEventListener('click', function () {
                 quickCategoryForm.reset();
@@ -499,7 +475,6 @@ const KoiAdmin = (function () {
                 e.preventDefault();
                 const id = quickCategoryId.value;
                 const nameValue = document.getElementById('quickCategoryName').value.trim();
-
                 const slugValue = nameValue.toLowerCase()
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/[^a-z0-9\s-]/g, '')
@@ -517,61 +492,40 @@ const KoiAdmin = (function () {
                 try {
                     const url = id ? '/api/menu/categories/' + id : '/api/menu/categories';
                     const method = id ? 'PUT' : 'POST';
-
                     const res = await api(url, { method: method, body: JSON.stringify(payload) });
                     if (res.ok) {
                         toast(id ? 'Categoría actualizada.' : 'Categoría creada con éxito.', 'success');
                         categoryFormModal.hidden = true;
-
                         await cargarYActualizarCategorias();
                         pintarMiniCategorias();
-
                         if (!id) {
                             const nuevaCat = categoriasCache.find(x => x.slug === slugValue);
-                            if (nuevaCat) {
-                                itemSelect.value = nuevaCat.id;
-                            }
+                            if (nuevaCat) itemSelect.value = nuevaCat.id;
                         }
-                    } else {
-                        toast('Error al guardar la categoría.', 'error');
-                    }
-                } catch (err) {
-                    toast('Error de conexión con el servidor.', 'error');
-                }
+                    } else { toast('Error al guardar la categoría.', 'error'); }
+                } catch (err) { toast('Error de conexión con el servidor.', 'error'); }
             });
         }
 
-        // Eventos manuales para cerrar los submodales sin interferir con el del plato
         const closeManageCategories = document.getElementById('closeManageCategories');
         if (closeManageCategories) closeManageCategories.addEventListener('click', () => manageCategoriesModal.hidden = true);
-
         const closeManageCategoriesBtn = document.getElementById('closeManageCategoriesBtn');
         if (closeManageCategoriesBtn) closeManageCategoriesBtn.addEventListener('click', () => manageCategoriesModal.hidden = true);
-
         const closeManageModalBtn = document.getElementById('closeManageModalBtn');
         if (closeManageModalBtn) closeManageModalBtn.addEventListener('click', () => manageCategoriesModal.hidden = true);
-
         const closeCategoryForm = document.getElementById('closeCategoryForm');
         if (closeCategoryForm) closeCategoryForm.addEventListener('click', () => categoryFormModal.hidden = true);
-
         const closeCategoryFormBtn = document.getElementById('closeCategoryFormBtn');
         if (closeCategoryFormBtn) closeCategoryFormBtn.addEventListener('click', () => categoryFormModal.hidden = true);
-
         const cancelQuickCategoryBtn = document.getElementById('cancelQuickCategoryBtn');
         if (cancelQuickCategoryBtn) cancelQuickCategoryBtn.addEventListener('click', () => categoryFormModal.hidden = true);
 
-
-        // =========================================================
-        // LÓGICA ORIGINAL DE PLATOS
-        // =========================================================
         if (fileInput) {
             fileInput.addEventListener('change', function (e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onloadend = function () {
-                        document.getElementById('itemImage').value = reader.result;
-                    };
+                    reader.onloadend = function () { document.getElementById('itemImage').value = reader.result; };
                     reader.readAsDataURL(file);
                 }
             });
@@ -591,13 +545,9 @@ const KoiAdmin = (function () {
         if (adminSearchInput) {
             adminSearchInput.addEventListener('input', function (e) {
                 const termino = e.target.value.toLowerCase().trim();
-                if (!termino) {
-                    pintarMenu(itemsCache);
-                    return;
-                }
+                if (!termino) { pintarMenu(itemsCache); return; }
                 const filtrados = itemsCache.filter(function (item) {
-                    return item.name.toLowerCase().includes(termino) ||
-                        (item.description && item.description.toLowerCase().includes(termino));
+                    return item.name.toLowerCase().includes(termino) || (item.description && item.description.toLowerCase().includes(termino));
                 });
                 pintarMenu(filtrados);
             });
@@ -613,8 +563,7 @@ const KoiAdmin = (function () {
             else if (btn.dataset.action === 'delete') {
                 itemABorrar = id;
                 const item = itemsCache.find(function (x) { return x.id === id; });
-                document.getElementById('confirmText').textContent =
-                    '¿Seguro que quieres eliminar "' + (item ? item.name : 'este plato') + '"?';
+                document.getElementById('confirmText').textContent = '¿Seguro que quieres eliminar "' + (item ? item.name : 'este plato') + '"?';
                 confirmModal.hidden = false;
             }
         });
@@ -653,9 +602,7 @@ const KoiAdmin = (function () {
                     toast(id ? 'Plato actualizado.' : 'Plato creado.', 'success');
                     modal.hidden = true;
                     cargar();
-                } else {
-                    toast('No se pudo guardar el plato.', 'error');
-                }
+                } else { toast('No se pudo guardar el plato.', 'error'); }
             } catch (err) { toast('Error al guardar.', 'error'); }
         });
 
@@ -710,6 +657,7 @@ const KoiAdmin = (function () {
     // GESTIÓN DE PEDIDOS (Take Away & Delivery)
     // ---------------------------------------------------------
     let pedidosCache = [];
+    let ordersPollInterval = null; // <- Guardamos la referencia del intervalo
 
     async function initOrders() {
         if (!initLayout('pedidos')) return;
@@ -724,9 +672,31 @@ const KoiAdmin = (function () {
                 if (res.ok) {
                     pedidosCache = await res.json();
                     aplicarFiltros();
-                } else {
-                    throw new Error();
-                }
+
+                    // === 1. EFECTO WHATSAPP: Limpiar el badge lateral inmediatamente ===
+                    if (pedidosCache.length > 0) {
+                        const maxId = Math.max(...pedidosCache.map(p => p.id));
+                        localStorage.setItem('koi_last_seen_order_id', maxId);
+
+                        const badgeLateral = document.getElementById('order-badge');
+                        if (badgeLateral) badgeLateral.hidden = true;
+                    }
+
+                    // === 2. CONTADOR INTERNO: Calcular carga de trabajo en cocina ===
+                    const workloadCounter = document.getElementById('ordersWorkloadCounter');
+                    if (workloadCounter) {
+                        // Contamos los pedidos que requieren acción (Pendientes o En preparación)
+                        const activos = pedidosCache.filter(p => p.status === 'pending' || p.status === 'preparing').length;
+
+                        if (activos > 0) {
+                            workloadCounter.textContent = `${activos} PEDIDOS PENDIENTES`;
+                            workloadCounter.style.display = 'inline-block';
+                        } else {
+                            workloadCounter.style.display = 'none';
+                        }
+                    }
+
+                } else { throw new Error(); }
             } catch (err) {
                 document.getElementById('ordersTable').innerHTML = `
                     <tr><td colspan="7" class="table-empty" style="color: var(--color-red-light);">Error al cargar los pedidos.</td></tr>
@@ -780,12 +750,8 @@ const KoiAdmin = (function () {
                     toast('Pedido actualizado con éxito.', 'success');
                     document.getElementById('orderDetailModal').hidden = true;
                     cargar();
-                } else {
-                    throw new Error();
-                }
-            } catch (error) {
-                toast('Error al guardar los cambios del pedido.', 'error');
-            }
+                } else { throw new Error(); }
+            } catch (error) { toast('Error al guardar los cambios del pedido.', 'error'); }
         });
 
         const cerrarModal = () => { document.getElementById('orderDetailModal').hidden = true; };
@@ -793,26 +759,137 @@ const KoiAdmin = (function () {
         document.getElementById('closeDetailBackdrop').addEventListener('click', cerrarModal);
         document.getElementById('closeDetailModalBtn').addEventListener('click', cerrarModal);
 
+        // Carga inicial obligatoria al abrir la vista
         cargar();
+        actualizarBadgePedidos();
+
+        // --- NUEVO: SHORT POLLING ---
+        // Limpiamos cualquier intervalo previo activo por seguridad
+        if (ordersPollInterval) clearInterval(ordersPollInterval);
+
+        // Configuramos la actualización automática cada 15 segundos (15000 ms)
+        ordersPollInterval = setInterval(function () {
+            // Solo hacemos la petición si el modal de edición no está visible,
+            // evitando que la lista se refresque e interrumpa al administrador si está editando.
+            const modalDetalle = document.getElementById('orderDetailModal');
+            if (!modalDetalle || modalDetalle.hidden) {
+                cargar();
+            }
+        }, 15000);
     }
+
+    // ---------------------------------------------------------
+    // CONTADOR DE NOTIFICACIONES GLOBAL (BADGE)
+    // ---------------------------------------------------------
+
+    async function actualizarBadgePedidos() {
+        const badge = document.getElementById('order-badge');
+        if (!badge) return;
+
+        try {
+            const res = await api('/api/orders');
+            if (res.ok) {
+                const pedidos = await res.json();
+
+                // Si la API no devuelve ningún pedido en absoluto, ocultamos y salimos
+                if (pedidos.length === 0) {
+                    badge.hidden = true;
+                    badge.style.display = 'none'; // Aseguramos por CSS que se oculte
+                    return;
+                }
+
+                // Conseguimos el ID del pedido más nuevo que existe en el servidor
+                const maxId = Math.max(...pedidos.map(p => p.id));
+
+                // COMPROBACIÓN: ¿El administrador está actualmente dentro de la pantalla de Pedidos?
+                const enPantallaPedidos = document.getElementById('ordersTable') !== null;
+
+                if (enPantallaPedidos) {
+                    // Si ya está dentro, marcamos automáticamente el último ID como "visto"
+                    localStorage.setItem('koi_last_seen_order_id', maxId);
+                    badge.hidden = true;
+                    badge.style.display = 'none'; // Ocultar círculo rojo del menú lateral
+                } else {
+                    // Si está en otra pantalla (ej. Reservas), leemos el último ID que llegó a ver
+                    const lastSeenId = parseInt(localStorage.getItem('koi_last_seen_order_id') || '0', 10);
+
+                    // Contamos cuántos pedidos nuevos hay con un ID mayor al guardado
+                    const pedidosNuevos = pedidos.filter(p => p.id > lastSeenId).length;
+
+                    // CORRECCIÓN AQUÍ: Solo se muestra si estrictamente hay más de 0 novedades
+                    if (pedidosNuevos > 0) {
+                        badge.textContent = pedidosNuevos;
+                        badge.hidden = false;
+                        badge.style.display = 'inline-flex'; // O el display que uses en tu CSS para el círculo
+                    } else {
+                        // Si el resultado es 0, lo fulminamos de la vista
+                        badge.hidden = true;
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error en el badge de notificaciones:", err);
+        }
+    }
+
+    // Iniciar el polling global del badge cuando cargue el panel de administración
+    document.addEventListener('DOMContentLoaded', () => {
+        // Primera carga inmediata
+        actualizarBadgePedidos();
+
+        // Comprobar cada 15 segundos si hay pedidos nuevos
+        setInterval(actualizarBadgePedidos, 15000);
+    });
 
     function pintarPedidos(pedidos) {
         const tbody = document.getElementById('ordersTable');
         if (pedidos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="table-empty">No hay pedidos registrados</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No hay pedidos registrados</td></tr>`;
             return;
         }
 
         tbody.innerHTML = pedidos.map(p => {
-            const badgePago = p.payment_status === 'paid' ? 'badge--confirmed' : 'badge--pending';
+            const badgePagoMap = {
+                'unpaid': 'badge--cancelled', // Rojo
+                'paid': 'badge--confirmed',   // Verde
+                'refunded': 'badge--refunded'  // Gris oscuro
+            };
+            const badgePago = badgePagoMap[p.payment_status] || 'badge--pending';
+
             const badgeStatusMap = {
                 'pending': 'badge--pending',
-                'preparing': 'badge--pending',
-                'ready': 'badge--completed',
-                'completed': 'badge--confirmed',
+                'preparing': 'badge--preparing',
+                'ready': 'badge--ready',
+                'out_for_delivery': 'badge--out_for_delivery',
+                'delivered': 'badge--confirmed',
                 'cancelled': 'badge--cancelled'
             };
             const badgeStatus = badgeStatusMap[p.status] || 'badge--info';
+
+            const textosTraducciones = {
+                'pending': 'PENDIENTE',
+                'preparing': 'EN COCINA',
+                'ready': 'LISTO',
+                'out_for_delivery': 'EN REPARTO',
+                'delivered': 'ENTREGADO',
+                'cancelled': 'CANCELADO',
+                'unpaid': 'NO PAGADO',
+                'paid': 'PAGADO',
+                'refunded': 'REEMBOLSADO',
+            };
+
+            // --- NUEVO: Estilos y textos para el método de pago ---
+            // --- CORRECCIÓN: Comprobación robusta del método de pago ---
+            // Validamos si viene como 'online', o si se procesó a través de Stripe (session_id)
+            const esOnline = p.payment_method === 'online' ||
+                p.payment_type === 'online' ||
+                (p.stripe_session_id && p.stripe_session_id !== '');
+
+            const textoMetodo = esOnline ? 'PAGO ONLINE' : 'PAGO EN MANO';
+            const estiloMetodo = esOnline
+                ? 'background-color: #635bff65; color: #ffffff;' // Morado Stripe
+                : 'background-color: #2e7d329d; color: #ffffff;' // Verde Efectivo
 
             return `
                 <tr>
@@ -827,8 +904,14 @@ const KoiAdmin = (function () {
                         </span>
                     </td>
                     <td class="cell-strong">${precio(p.total)}</td>
-                    <td><span class="badge ${badgePago}">${p.payment_status.toUpperCase()}</span></td>
-                    <td><span class="badge ${badgeStatus}">${p.status.toUpperCase()}</span></td>
+                    <!-- --- NUEVO: Columna del método empleado --- -->
+                    <td>
+                        <span class="badge" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; ${estiloMetodo}">
+                            ${textoMetodo}
+                        </span>
+                    </td>
+                    <td><span class="badge ${badgePago}">${textosTraducciones[p.payment_status] || p.payment_status.toUpperCase()}</span></td>
+                    <td><span class="badge ${badgeStatus}">${textosTraducciones[p.status] || p.status.toUpperCase()}</span></td>
                     <td>
                         <div class="row-actions">
                             <button class="btn-admin btn-admin--gold btn-admin--sm" data-id="${p.id}">Detalle</button>
@@ -843,11 +926,22 @@ const KoiAdmin = (function () {
         const p = pedidosCache.find(item => item.id === id);
         if (!p) return;
 
+        const textosTipos = { 'takeaway': 'Para Recoger (Take Away)', 'delivery': 'A Domicilio' };
+
+        const textosMetodos = { 'online': 'Tarjeta de Crédito (Online - Stripe)', 'cash_card': 'Pago en mano (Efectivo / Tarjeta al repartidor o local)' };
+
         document.getElementById('detId').textContent = p.id;
         document.getElementById('detName').textContent = p.customer_name;
         document.getElementById('detPhone').textContent = p.customer_phone;
         document.getElementById('detEmail').textContent = p.customer_email;
-        document.getElementById('detType').textContent = p.order_type === 'takeaway' ? 'Para Recoger (Take Away)' : 'A Domicilio';
+        document.getElementById('detType').textContent = textosTipos[p.order_type] || p.order_type;
+
+        // --- Si tienes un elemento 'detPaymentMethod' en tu HTML, lo rellenamos: ---
+        const detMetodoEl = document.getElementById('detPaymentMethod');
+        if (detMetodoEl) {
+            detMetodoEl.textContent = textosMetodos[p.payment_method] || p.payment_method;
+        }
+
         document.getElementById('detNotes').textContent = p.notes || 'Sin comentarios adicionales.';
 
         const addressRow = document.getElementById('detAddressRow');
@@ -875,7 +969,6 @@ const KoiAdmin = (function () {
         document.getElementById('orderDetailModal').hidden = false;
     }
 
-    // API pública del módulo
     return {
         initLogin: initLogin,
         initDashboard: initDashboard,

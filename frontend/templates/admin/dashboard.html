@@ -38,11 +38,17 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Hora</th><th>Cliente</th><th>Personas</th><th>Teléfono</th><th>Estado</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Teléfono</th>
+                    <th>Personas</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody id="todayTable">
-                <tr><td colspan="5" class="table-empty">Cargando…</td></tr>
+                <tr>
+                    <td colspan="5" class="table-empty">Cargando…</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -57,15 +63,22 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Personas</th><th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Personas</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody id="upcomingTable">
-                <tr><td colspan="5" class="table-empty">Cargando…</td></tr>
+                <tr>
+                    <td colspan="5" class="table-empty">Cargando…</td>
+                </tr>
             </tbody>
         </table>
     </div>
 </section>
 {% endblock %}
 
-{% block admin_js %}<script>KoiAdmin.initDashboard();</script>{% endblock %}
+{% block admin_js %}
+<script>KoiAdmin.initDashboard();</script>{% endblock %}

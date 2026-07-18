@@ -101,7 +101,7 @@
         const nombres = ['customer_name', 'customer_phone', 'customer_email', 'date', 'time', 'guests'];
         const todosValidos = nombres.map(validarCampo).every(Boolean);
         if (!todosValidos) {
-            mostrarMensaje('Por favor, corrige los campos marcados en rojo.', 'error');
+            mostrarMensaje('Por favor, rellena todos los campos obligatorios', 'error');
             return;
         }
 

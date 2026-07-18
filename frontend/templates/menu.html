@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}Menú · Koi Restaurante Japonés{% endblock %}
-{% block description %}Descubre la carta de Koi: sushi, nigiri, sashimi, ramen, arroces y postres japoneses de autor elaborados con producto de temporada.{% endblock %}
+{% block description %}Descubre la carta de Koi: sushi, nigiri, sashimi, ramen, arroces y postres japoneses de autor
+elaborados con producto de temporada.{% endblock %}
 
-{% block extra_css %}<link rel="stylesheet" href="/static/css/menu.css">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/menu.css">{% endblock %}
 
 {% block content %}
 <!-- Cabecera de página -->
@@ -12,7 +14,8 @@
     <div class="container page-header__content reveal">
         <span class="eyebrow eyebrow--center">品書き · Nuestra carta</span>
         <h1 class="page-header__title">Menú</h1>
-        <p class="page-header__sub">Una cuidada selección de platos japoneses elaborados al momento con ingredientes de la máxima calidad.</p>
+        <p class="page-header__sub">Una cuidada selección de platos japoneses elaborados al momento con ingredientes de
+            la máxima calidad.</p>
     </div>
 </header>
 
@@ -20,8 +23,13 @@
     <div class="container">
         <!-- Barra de búsqueda -->
         <div class="menu-search">
-            <svg class="menu-search__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="search" id="menuSearch" class="menu-search__input" placeholder="Buscar en la carta…" autocomplete="off">
+            <svg class="menu-search__icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="search" id="menuSearch" class="menu-search__input" placeholder="Buscar en la carta…"
+                autocomplete="off">
         </div>
 
         <!-- Tabs de categorías -->
@@ -48,9 +56,11 @@
 
 <!-- ==================== BOTÓN FLOTANTE DEL CARRITO ==================== -->
 <button class="cart-fab" id="cartFab" aria-label="Ver carrito">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
     </svg>
     <span class="cart-fab__count" id="cartCount">0</span>
 </button>
@@ -80,7 +90,8 @@
     <div class="cart-summary" id="cartSummary" hidden>
         <div class="cart-summary__row"><span>Subtotal</span><span id="sumSubtotal">0,00 €</span></div>
         <div class="cart-summary__row" id="sumDeliveryRow"><span>Envío</span><span id="sumDelivery">0,00 €</span></div>
-        <div class="cart-summary__row cart-summary__row--total"><span>Total</span><span id="sumTotal">0,00 €</span></div>
+        <div class="cart-summary__row cart-summary__row--total"><span>Total</span><span id="sumTotal">0,00 €</span>
+        </div>
         <button class="btn btn--gold cart-checkout-btn" id="cartCheckoutBtn">Finalizar y pagar</button>
     </div>
 </aside>
@@ -109,22 +120,56 @@
             </div>
             <div class="checkout-field" id="ckAddressField">
                 <label for="ckAddress">Dirección de entrega *</label>
-                <input type="text" id="ckAddress" name="address" placeholder="Calle, número, piso, ciudad y código postal">
+                <input type="text" id="ckAddress" name="address"
+                    placeholder="Calle, número, piso, ciudad y código postal">
             </div>
             <div class="checkout-field">
                 <label for="ckNotes">Comentarios (opcional)</label>
-                <textarea id="ckNotes" name="notes" rows="2" placeholder="Alergias, indicaciones para el repartidor…"></textarea>
+                <textarea id="ckNotes" name="notes" rows="2"
+                    placeholder="Alergias, indicaciones para el repartidor…"></textarea>
             </div>
 
+            <!-- ==================== NUEVA SECCIÓN: MÉTODO DE PAGO ==================== -->
+            <div class="payment-section">
+                <span class="payment-section__title">Método de pago *</span>
+                <div class="payment-options">
+                    <!-- Opción Online -->
+                    <label class="payment-card">
+                        <input type="radio" name="payment_method" value="online" checked>
+                        <span class="payment-card__content">
+                            <span class="payment-card__icon">💳</span>
+                            <span class="payment-card__text">
+                                <strong class="payment-card__main">Pago Online</strong>
+                                <span class="payment-card__sub">Tarjeta, Paypal, Googlepay o Applepay</span>
+                            </span>
+                        </span>
+                    </label>
+
+                    <!-- Opción En Mano -->
+                    <label class="payment-card">
+                        <input type="radio" name="payment_method" value="cash_card">
+                        <span class="payment-card__content">
+                            <span class="payment-card__icon">🤝</span>
+                            <span class="payment-card__text">
+                                <strong class="payment-card__main">En mano</strong>
+                                <span class="payment-card__sub">Efectivo o tarjeta al recibir</span>
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <!-- ======================================================================= -->
+
+            <!-- MENSAJE Y BOTÓN -->
             <div class="checkout-message" id="checkoutMessage" hidden></div>
 
             <button type="submit" class="btn btn--gold checkout-submit" id="checkoutSubmit">
-                Pagar <span id="checkoutTotal"></span>
+                <span id="ckButtonText">Pagar</span> <span id="checkoutTotal"></span>
             </button>
-            <p class="checkout-secure">🔒 Pago seguro procesado por Stripe</p>
-        </form>
+            <p class="checkout-secure" id="checkoutSecureNotice">Pago seguro procesado por Stripe</p>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}<script src="/static/js/menu.js"></script>{% endblock %}
+{% block extra_js %}
+<script src="/static/js/menu.js"></script>{% endblock %}

@@ -29,6 +29,7 @@ class OrderItemResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Pedido
 # ---------------------------------------------------------------------------
+
 class OrderCreate(BaseModel):
     """Datos que envía el cliente para crear un pedido y pagarlo."""
 
@@ -38,6 +39,10 @@ class OrderCreate(BaseModel):
     order_type: Literal["delivery", "takeaway"] = "delivery"
     address: Optional[str] = None
     notes: Optional[str] = None
+    
+    # --- NUEVO: Acepta los métodos de pago definidos en el frontend ---
+    payment_method: Literal["online", "cash_card"] = "online" 
+    
     items: List[OrderItemInput] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -46,7 +51,6 @@ class OrderCreate(BaseModel):
         if self.order_type == "delivery" and not (self.address and self.address.strip()):
             raise ValueError("La dirección es obligatoria para pedidos a domicilio.")
         return self
-
 
 class OrderStatusUpdate(BaseModel):
     """Actualización de estado del pedido (admin)."""
@@ -84,10 +88,9 @@ class OrderResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class CheckoutResponse(BaseModel):
-    """Respuesta al crear la sesión de pago de Stripe."""
+    """Respuesta al crear el pedido o la sesión de pago de Stripe."""
 
     order_id: int
     checkout_url: str
-    session_id: str
+    session_id: Optional[str] = None

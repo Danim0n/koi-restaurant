@@ -28,20 +28,32 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 # ---------------------------------------------------------------------------
 @router.post("/checkout", response_model=CheckoutResponse, status_code=201)
 def crear_checkout(datos: OrderCreate, db: Session = Depends(get_db)):
-    """Crea el pedido en la base de datos y genera una Stripe Checkout Session.
-
-    Devuelve la URL a la que el frontend debe redirigir al cliente para pagar.
+    """Crea el pedido en la base de datos y genera una Stripe Checkout Session si es Online.
+    
+    Si es pago en mano, guarda el pedido directamente y devuelve la URL de éxito local.
     """
+    # 1) Crear el pedido validando platos y recalculando precios en el servidor
+    # NOTA: Si tu modelo de base de datos no tiene una columna para 'payment_method',
+    # pasarlo en 'datos' no romperá nada si tu build_order solo extrae lo necesario.
+    pedido = order_service.build_order(db, datos)
+
+    # 2) SI EL PAGO ES EN MANO: Nos saltamos Stripe por completo
+    if datos.payment_method == "cash_card":
+        db.commit() # Aseguramos que se guarde el pedido en la BD
+        return CheckoutResponse(
+            order_id=pedido.id,
+            checkout_url=f"{settings.BASE_URL}/pedido/exito?order_id={pedido.id}",
+            session_id=None
+        )
+
+    # 3) SI EL PAGO ES ONLINE: Ejecuta Stripe con normalidad
     if not settings.STRIPE_SECRET_KEY:
         raise HTTPException(
             status_code=503,
             detail="La pasarela de pago no está configurada. Añade STRIPE_SECRET_KEY.",
         )
 
-    # 1) Crear el pedido validando platos y recalculando precios en el servidor
-    pedido = order_service.build_order(db, datos)
-
-    # 2) Construir las líneas para Stripe (importes en céntimos)
+    # Construir las líneas para Stripe (importes en céntimos)
     line_items = []
     for item in pedido.items:
         line_items.append(
@@ -55,7 +67,6 @@ def crear_checkout(datos: OrderCreate, db: Session = Depends(get_db)):
             }
         )
 
-    # Gastos de envío como línea adicional (si aplica)
     if pedido.delivery_fee and pedido.delivery_fee > 0:
         line_items.append(
             {
@@ -68,7 +79,6 @@ def crear_checkout(datos: OrderCreate, db: Session = Depends(get_db)):
             }
         )
 
-    # 3) Crear la sesión de Stripe Checkout
     try:
         sesion = stripe.checkout.Session.create(
             mode="payment",
@@ -87,7 +97,6 @@ def crear_checkout(datos: OrderCreate, db: Session = Depends(get_db)):
             status_code=502, detail=f"Error al crear la sesión de pago: {exc}"
         )
 
-    # 4) Guardar la referencia de sesión en el pedido
     pedido.stripe_session_id = sesion.id
     db.commit()
 
@@ -96,7 +105,6 @@ def crear_checkout(datos: OrderCreate, db: Session = Depends(get_db)):
         checkout_url=sesion.url,
         session_id=sesion.id,
     )
-
 
 @router.get("/by-session/{session_id}", response_model=OrderResponse)
 def obtener_pedido_por_sesion(session_id: str, db: Session = Depends(get_db)):

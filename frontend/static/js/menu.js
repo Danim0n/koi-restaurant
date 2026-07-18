@@ -81,7 +81,6 @@
         }
         guardarCarrito(carrito);
         renderCarrito();
-        abrirCarrito();
     }
 
     function cambiarCantidad(id, delta) {
@@ -118,19 +117,19 @@
 
         card.innerHTML =
             `<div class="${imgClase}"${estiloImg}>` +
-                (item.is_featured ? '<span class="dish-badge">Destacado</span>' : '') +
-                (item.is_available ? '' : '<span class="dish-unavailable-tag">No disponible</span>') +
+            (item.is_featured ? '<span class="dish-badge">Destacado</span>' : '') +
+            (item.is_available ? '' : '<span class="dish-unavailable-tag">No disponible</span>') +
             `</div>` +
             `<div class="dish-card__body">` +
-                `<div class="dish-card__head">` +
-                    `<h3 class="dish-card__name">${escapar(item.name)}</h3>` +
-                    `<span class="dish-card__price">${formatearPrecio(item.price)}</span>` +
-                `</div>` +
-                `<p class="dish-card__desc">${escapar(item.description || '')}</p>` +
-                `<div class="dish-card__foot">` +
-                    (item.category_name ? `<span class="dish-card__cat">${escapar(item.category_name)}</span>` : '<span></span>') +
-                    botonAnadir +
-                `</div>` +
+            `<div class="dish-card__head">` +
+            `<h3 class="dish-card__name">${escapar(item.name)}</h3>` +
+            `<span class="dish-card__price">${formatearPrecio(item.price)}</span>` +
+            `</div>` +
+            `<p class="dish-card__desc">${escapar(item.description || '')}</p>` +
+            `<div class="dish-card__foot">` +
+            (item.category_name ? `<span class="dish-card__cat">${escapar(item.category_name)}</span>` : '<span></span>') +
+            botonAnadir +
+            `</div>` +
             `</div>`;
         return card;
     }
@@ -157,16 +156,44 @@
         }
     }
 
-    // Delegación de eventos para el botón "Añadir"
+    // Delegación de eventos para el botón "Añadir" con ANIMACIONES
     grid.addEventListener('click', function (e) {
         const btn = e.target.closest('.dish-add-btn');
+        const fab = document.getElementById('cartFab'); // Obtenemos el FAB flotante
+
         if (!btn) return;
+
+        // Evitar múltiples clics rápidos mientras dura la animación
+        if (btn.classList.contains('is-success')) return;
+
         const id = parseInt(btn.dataset.id, 10);
         const item = todosLosItems.find(function (i) { return i.id === id; });
+
         if (item) {
+            // 1. Ejecutar la lógica de negocio (añadir a localStorage)
             anadirAlCarrito(item);
+
+            // 2. Feedback visual en el PROPIO BOTÓN
+            const textoOriginal = btn.textContent;
             btn.textContent = '✓ Añadido';
-            setTimeout(function () { btn.textContent = 'Añadir'; }, 900);
+            btn.classList.add('is-success'); // Activamos animación CSS
+
+            // 3. Feedback visual en el BOTÓN FLOTANTE (FAB)
+            if (fab) {
+                // Quitamos la clase por si acaso ya estaba (para reiniciar la animación)
+                fab.classList.remove('is-adding');
+                // Forzamos un "reflow" para que el navegador reinicie la animación
+                void fab.offsetWidth;
+                // Añadimos la clase para que vibre
+                fab.classList.add('is-adding');
+            }
+
+            // 4. Limpieza tras la animación (volver al estado original)
+            setTimeout(function () {
+                btn.textContent = textoOriginal;
+                btn.classList.remove('is-success');
+                if (fab) fab.classList.remove('is-adding');
+            }, 900); // Duración ligeramente superior a la animación CSS
         }
     });
 
@@ -259,13 +286,13 @@
             fila.className = 'cart-line';
             fila.innerHTML =
                 `<div class="cart-line__info">` +
-                    `<span class="cart-line__name">${escapar(l.name)}</span>` +
-                    `<span class="cart-line__price">${formatearPrecio(l.price)}</span>` +
+                `<span class="cart-line__name">${escapar(l.name)}</span>` +
+                `<span class="cart-line__price">${formatearPrecio(l.price)}</span>` +
                 `</div>` +
                 `<div class="cart-line__qty">` +
-                    `<button class="qty-btn" data-act="dec" data-id="${l.menu_item_id}">−</button>` +
-                    `<span>${l.quantity}</span>` +
-                    `<button class="qty-btn" data-act="inc" data-id="${l.menu_item_id}">+</button>` +
+                `<button class="qty-btn" data-act="dec" data-id="${l.menu_item_id}">−</button>` +
+                `<span>${l.quantity}</span>` +
+                `<button class="qty-btn" data-act="inc" data-id="${l.menu_item_id}">+</button>` +
                 `</div>` +
                 `<span class="cart-line__subtotal">${formatearPrecio(l.price * l.quantity)}</span>` +
                 `<button class="cart-line__remove" data-act="del" data-id="${l.menu_item_id}" aria-label="Eliminar">&times;</button>`;
@@ -326,6 +353,15 @@
         ckTotal.textContent = formatearPrecio(calcularSubtotal() + envioActual());
         ckMessage.hidden = true;
         ckOverlay.hidden = false;
+
+        // --- NUEVO: Resetear método de pago al abrir el modal ---
+        const onlineRadio = document.querySelector('input[name="payment_method"][value="online"]');
+        if (onlineRadio) {
+            onlineRadio.checked = true;
+            // Forzamos manualmente el evento para actualizar textos y Stripe
+            const event = new Event('change', { bubbles: true });
+            onlineRadio.dispatchEvent(event);
+        }
     }
 
     function cerrarCheckout() {
@@ -337,6 +373,26 @@
     ckOverlay.addEventListener('click', function (e) {
         if (e.target === ckOverlay) cerrarCheckout();
     });
+
+    // --- NUEVO: Escuchador para cambiar textos según el método de pago ---
+    const ckFormElement = document.getElementById('checkoutForm');
+    if (ckFormElement) {
+        ckFormElement.addEventListener('change', function (e) {
+            const radio = e.target.closest('input[name="payment_method"]');
+            if (!radio) return;
+
+            const buttonText = document.getElementById('ckButtonText');
+            const secureNotice = document.getElementById('checkoutSecureNotice');
+
+            if (radio.value === 'cash_card') {
+                if (buttonText) buttonText.textContent = 'Confirmar pedido';
+                if (secureNotice) secureNotice.hidden = true;
+            } else {
+                if (buttonText) buttonText.textContent = 'Pagar';
+                if (secureNotice) secureNotice.hidden = false;
+            }
+        });
+    }
 
     function mostrarMensaje(texto, esError) {
         ckMessage.hidden = false;
@@ -353,6 +409,9 @@
         const email = ckForm.customer_email.value.trim();
         const direccion = ckAddress.value.trim();
 
+        // --- NUEVO: Capturar método de pago ---
+        const metodoPago = ckForm.payment_method.value;
+
         // Validación básica en cliente
         if (nombre.length < 2) return mostrarMensaje('Introduce tu nombre completo.', true);
         if (telefono.length < 6) return mostrarMensaje('Introduce un teléfono válido.', true);
@@ -368,13 +427,20 @@
             order_type: tipoPedido,
             address: tipoPedido === 'delivery' ? direccion : null,
             notes: ckForm.notes.value.trim() || null,
+            payment_method: metodoPago, // --- NUEVO: Enviado al backend ---
             items: carrito.map(function (l) {
                 return { menu_item_id: l.menu_item_id, quantity: l.quantity };
             })
         };
 
         ckSubmit.disabled = true;
-        ckSubmit.textContent = 'Redirigiendo al pago…';
+
+        // --- NUEVO: Texto de carga condicional ---
+        if (metodoPago === 'cash_card') {
+            ckSubmit.innerHTML = 'Procesando pedido…';
+        } else {
+            ckSubmit.innerHTML = 'Redirigiendo al pago…';
+        }
 
         try {
             const res = await fetch('/api/orders/checkout', {
@@ -388,17 +454,21 @@
                 throw new Error(data.detail || 'No se ha podido crear el pedido.');
             }
 
-            // Vaciar el carrito antes de redirigir a Stripe
+            // Vaciar el carrito antes de redirigir o ir al éxito
             localStorage.removeItem(CART_KEY);
-            window.location.href = data.checkout_url;
+
+            // --- NUEVO: Redirección condicional según la respuesta de tu backend ---
+            // Si el backend procesa efectivo, te devolverá directamente una página de éxito local
+            window.location.href = data.checkout_url || '/orders/success';
         } catch (err) {
             mostrarMensaje(err.message, true);
             ckSubmit.disabled = false;
-            ckSubmit.innerHTML = 'Pagar <span id="checkoutTotal">' +
-                formatearPrecio(calcularSubtotal() + envioActual()) + '</span>';
+
+            // --- NUEVO: Restaurar con el formato estructurado de spans ---
+            const textoOriginal = metodoPago === 'cash_card' ? 'Confirmar pedido' : 'Pagar';
+            ckSubmit.innerHTML = `<span id="ckButtonText">${textoOriginal}</span> <span id="checkoutTotal">${formatearPrecio(calcularSubtotal() + envioActual())}</span>`;
         }
     });
-
     // ---------------------------------------------------------------
     // Carga inicial desde la API
     // ---------------------------------------------------------------

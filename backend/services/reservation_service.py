@@ -39,7 +39,21 @@ def comensales_reservados(db: Session, fecha: str, hora: str) -> int:
 
 
 def comprobar_disponibilidad(db: Session, fecha: str, hora: str, guests: int) -> dict:
-    """Comprueba si hay capacidad para una reserva en fecha/hora dadas."""
+    """Comprueba si hay capacidad para una reserva y si la hora no ha pasado."""
+    hoy = date_cls.today()
+    hoy_str = hoy.isoformat()
+
+    # 1) Validación de hora pasada (si la reserva es para hoy)
+    if fecha == hoy_str:
+        ahora_str = datetime.now().strftime("%H:%M")
+        if hora < ahora_str:
+            return {
+                "available": False,
+                "message": "Lo sentimos, no se pueden realizar reservas para una hora que ya ha pasado.",
+                "remaining_capacity": 0
+            }
+
+    # 2) Validación de capacidad existente
     capacidad = _capacidad_total(db)
     ocupados = comensales_reservados(db, fecha, hora)
     restante = capacidad - ocupados
@@ -195,7 +209,7 @@ def reservas_proximas(db: Session, limite: int = 10) -> List[Reservation]:
     hoy_str = date_cls.today().isoformat()
     return (
         db.query(Reservation)
-        .filter(Reservation.date >= hoy_str, Reservation.status.in_(ESTADOS_ACTIVOS))
+        .filter(Reservation.date > hoy_str, Reservation.status.in_(ESTADOS_ACTIVOS))
         .order_by(Reservation.date.asc(), Reservation.time.asc())
         .limit(limite)
         .all()

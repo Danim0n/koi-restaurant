@@ -4,17 +4,23 @@
 {% block description %}Tu pedido en Koi se ha confirmado correctamente.{% endblock %}
 
 {% block content %}
-<section class="section" style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;">
+<section class="section"
+    style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;">
     <div class="container" style="max-width:640px;">
-        <div style="font-size:4rem;margin-bottom:1rem;">🎉</div>
-        <span class="eyebrow eyebrow--center">ありがとう · Gracias</span>
-        <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;margin:.5rem 0 1rem;">¡Pedido confirmado!</h1>
+        <div style="font-size:4rem;margin-bottom:1rem;"></div>
+        <span class="eyebrow eyebrow--center">Gracias</span>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;margin:.5rem 0 1rem;">¡Pedido confirmado!
+        </h1>
         <p id="successDetail" style="color:#555;font-size:1.05rem;line-height:1.7;">
             Estamos verificando tu pago…
         </p>
-        <div id="orderBox" style="display:none;margin:2rem auto;padding:1.75rem;border:1px solid #e5ddcb;border-radius:12px;text-align:left;background:#faf7f0;"></div>
+        <div id="orderBox"
+            style="display:none;margin:2rem auto;padding:1.75rem;border:1px solid #e5ddcb;border-radius:12px;text-align:left;background:#faf7f0;">
+        </div>
         <div style="margin-top:2rem;">
-            <a href="/menu" class="btn btn--gold">Volver a la carta</a>
+            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                <a href="/" class="btn btn--gold">Volver al inicio</a>
+            </div>
             <a href="/" class="btn btn--ghost" style="margin-left:.5rem;">Ir al inicio</a>
         </div>
     </div>
@@ -23,44 +29,44 @@
 
 {% block extra_js %}
 <script>
-(function () {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session_id');
-    const detail = document.getElementById('successDetail');
-    const box = document.getElementById('orderBox');
+    (function () {
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session_id');
+        const detail = document.getElementById('successDetail');
+        const box = document.getElementById('orderBox');
 
-    function precio(n) { return Number(n).toFixed(2).replace('.', ',') + ' €'; }
+        function precio(n) { return Number(n).toFixed(2).replace('.', ',') + ' €'; }
 
-    if (!sessionId) {
-        detail.textContent = 'Tu pago se ha procesado correctamente. Recibirás la confirmación por email.';
-        return;
-    }
+        if (!sessionId) {
+            detail.textContent = 'Tu pago se ha procesado correctamente. Recibirás la confirmación por email.';
+            return;
+        }
 
-    fetch('/api/orders/by-session/' + encodeURIComponent(sessionId))
-        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-        .then(function (o) {
-            const pagado = o.payment_status === 'paid';
-            detail.innerHTML = pagado
-                ? 'Hemos recibido tu pago correctamente. ¡Estamos preparando tu pedido!'
-                : 'Tu pedido se ha registrado. Estamos confirmando el pago.';
-            let html = '<h3 style="margin-top:0;font-family:\'Cormorant Garamond\',serif;">Pedido #' + o.id + '</h3>';
-            html += '<p style="margin:.25rem 0;color:#777;">' +
-                (o.order_type === 'delivery' ? 'Entrega a domicilio' : 'Recogida en local') + '</p>';
-            o.items.forEach(function (it) {
-                html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #eee;">' +
-                    '<span>' + it.quantity + '× ' + it.name + '</span>' +
-                    '<span>' + precio(it.subtotal) + '</span></div>';
+        fetch('/api/orders/by-session/' + encodeURIComponent(sessionId))
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .then(function (o) {
+                const pagado = o.payment_status === 'paid';
+                detail.innerHTML = pagado
+                    ? 'Hemos recibido tu pago correctamente. ¡Estamos preparando tu pedido!'
+                    : 'Tu pedido se ha registrado. Estamos confirmando el pago.';
+                let html = '<h3 style="margin-top:0;font-family:\'Cormorant Garamond\',serif;">Pedido #' + o.id + '</h3>';
+                html += '<p style="margin:.25rem 0;color:#777;">' +
+                    (o.order_type === 'delivery' ? 'Entrega a domicilio' : 'Recogida en local') + '</p>';
+                o.items.forEach(function (it) {
+                    html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid #eee;">' +
+                        '<span>' + it.quantity + '× ' + it.name + '</span>' +
+                        '<span>' + precio(it.subtotal) + '</span></div>';
+                });
+                if (o.delivery_fee > 0) {
+                    html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;"><span>Envío</span><span>' + precio(o.delivery_fee) + '</span></div>';
+                }
+                html += '<div style="display:flex;justify-content:space-between;padding:.6rem 0 0;font-weight:700;font-size:1.1rem;"><span>Total</span><span>' + precio(o.total) + '</span></div>';
+                box.innerHTML = html;
+                box.style.display = 'block';
+            })
+            .catch(function () {
+                detail.textContent = 'Tu pago se ha procesado. Recibirás la confirmación por email.';
             });
-            if (o.delivery_fee > 0) {
-                html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;"><span>Envío</span><span>' + precio(o.delivery_fee) + '</span></div>';
-            }
-            html += '<div style="display:flex;justify-content:space-between;padding:.6rem 0 0;font-weight:700;font-size:1.1rem;"><span>Total</span><span>' + precio(o.total) + '</span></div>';
-            box.innerHTML = html;
-            box.style.display = 'block';
-        })
-        .catch(function () {
-            detail.textContent = 'Tu pago se ha procesado. Recibirás la confirmación por email.';
-        });
-})();
+    })();
 </script>
 {% endblock %}
