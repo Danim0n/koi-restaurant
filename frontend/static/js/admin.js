@@ -757,7 +757,6 @@ const KoiAdmin = (function () {
         const cerrarModal = () => { document.getElementById('orderDetailModal').hidden = true; };
         document.getElementById('closeDetailBtn').addEventListener('click', cerrarModal);
         document.getElementById('closeDetailBackdrop').addEventListener('click', cerrarModal);
-        document.getElementById('closeDetailModalBtn').addEventListener('click', cerrarModal);
 
         // Carga inicial obligatoria al abrir la vista
         cargar();

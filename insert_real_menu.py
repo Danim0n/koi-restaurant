@@ -1,6 +1,15 @@
 import re
 from backend.database import SessionLocal, engine, Base
 from backend.models.menu import MenuCategory, MenuItem
+from backend.models.user import User 
+
+# 1. IMPORTAMOS LAS SETTINGS CENTRALIZADAS DE TU BACKEND
+# (Ajusta la ruta de importación si tu archivo de configuración se llama config.py, settings.py, etc.)
+from backend.config.settings import settings 
+
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Agrupamos los platos por categorías lógicas y limpias para facilitar el filtrado en el frontend
 MENU_DATA = {
@@ -255,12 +264,31 @@ def slugify(text):
 
 def insert_menu():
     print("🔨 Creando y limpiando tablas de la base de datos...")
-    Base.metadata.drop_all(bind=engine)   # Borra las tablas existentes para asegurar limpieza total
-    Base.metadata.create_all(bind=engine) # Las vuelve a crear completamente vacías
+    Base.metadata.drop_all(bind=engine)   
+    Base.metadata.create_all(bind=engine) 
     
     print("⏳ Conectando a la base de datos SQLite...")
     session = SessionLocal()
     try:
+        # =================================================================
+        # CREADOR DE USUARIO ADMINISTRADOR DE PRUEBA DESDE SETTINGS
+        # =================================================================
+        print("👤 Creando usuario administrador inicial desde la configuración...")
+        
+        # Encriptamos la contraseña leyendo directamente de las variables de entorno / settings[cite: 44]
+        hashed_password = pwd_context.hash(settings.ADMIN_PASSWORD)
+        
+        admin_user = User(
+            email=settings.ADMIN_EMAIL,       # Coge "admin@koi.com" por defecto[cite: 44]
+            name=settings.ADMIN_NAME,         # Coge "Administrador Koi" por defecto[cite: 44]
+            hashed_password=hashed_password, 
+            is_admin=True                    
+        )
+        session.add(admin_user)
+        session.flush() 
+        print(f"✅ Administrador creado con éxito usando las credenciales de Settings[cite: 44]")
+        # =================================================================
+
         category_counter = 0
         item_counter = 0
         

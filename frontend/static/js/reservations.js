@@ -135,8 +135,8 @@
                 const reserva = await res.json();
                 mostrarMensaje(
                     '¡Gracias, ' + datos.customer_name + '! Tu reserva para ' + datos.guests +
-                    ' comensales el ' + datos.date + ' a las ' + datos.time +
-                    ' se ha registrado (nº ' + reserva.id + '). Te confirmaremos en breve.',
+                    ' personas el ' + datos.date + ' a las ' + datos.time +
+                    ' se ha registrado. Te confirmaremos en breve.',
                     'success'
                 );
                 form.reset();
