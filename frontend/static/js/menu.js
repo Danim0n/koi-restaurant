@@ -115,6 +115,12 @@
             ? `<button class="dish-add-btn" data-id="${item.id}">Añadir</button>`
             : '';
 
+        // Formateamos dinámicamente el nombre para romper línea en el paréntesis si existe
+        const nombreEscapado = escapar(item.name);
+        const nombreConSalto = nombreEscapado.includes('(')
+            ? nombreEscapado.replace('(', '<br>(')
+            : nombreEscapado;
+
         card.innerHTML =
             `<div class="${imgClase}"${estiloImg}>` +
             (item.is_featured ? '<span class="dish-badge">Destacado</span>' : '') +
@@ -122,7 +128,7 @@
             `</div>` +
             `<div class="dish-card__body">` +
             `<div class="dish-card__head">` +
-            `<h3 class="dish-card__name">${escapar(item.name)}</h3>` +
+            `<h3 class="dish-card__name">${nombreConSalto}</h3>` +
             `<span class="dish-card__price">${formatearPrecio(item.price)}</span>` +
             `</div>` +
             `<p class="dish-card__desc">${escapar(item.description || '')}</p>` +
