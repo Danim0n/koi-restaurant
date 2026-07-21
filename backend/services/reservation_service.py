@@ -13,6 +13,9 @@ from backend.schemas.reservation import ReservationCreate, ReservationUpdate
 # Estados que ocupan capacidad de forma efectiva
 ESTADOS_ACTIVOS = ("pending", "confirmed")
 
+# Configuración de negocio para Koi
+DURACION_RESERVA_MINUTOS = 90
+
 
 def _capacidad_total(db: Session) -> int:
     """Suma la capacidad de todas las mesas activas."""
@@ -24,13 +27,28 @@ def _capacidad_total(db: Session) -> int:
     return int(total or 0)
 
 
+def _obtener_rango_conflicto(hora_reserva_str: str) -> tuple[str, str]:
+    """Calcula el intervalo de tiempo en el que no puede solaparse otra reserva.
+    
+    Si una reserva entra a las 13:30, durará hasta las 15:00.
+    Cualquier otra reserva entre las 12:01 y las 14:59 generaría un conflicto en esa mesa.
+    """
+    dt = datetime.strptime(hora_reserva_str, "%H:%M")
+    
+    # Restamos y sumamos (duración - 1 minuto) para que los límites del 'between' sean estrictos
+    t_min = (dt - timedelta(minutes=DURACION_RESERVA_MINUTOS - 1)).strftime("%H:%M")
+    t_max = (dt + timedelta(minutes=DURACION_RESERVA_MINUTOS - 1)).strftime("%H:%M")
+    return t_min, t_max
+
+
 def comensales_reservados(db: Session, fecha: str, hora: str) -> int:
-    """Número de comensales ya reservados en una fecha/hora concretas."""
+    """Número de comensales ya reservados que coinciden en esa franja de 90 min."""
+    t_min, t_max = _obtener_rango_conflicto(hora)
     total = (
         db.query(func.coalesce(func.sum(Reservation.guests), 0))
         .filter(
             Reservation.date == fecha,
-            Reservation.time == hora,
+            Reservation.time.between(t_min, t_max),  # Protege todo el rango de tiempo de la reserva
             Reservation.status.in_(ESTADOS_ACTIVOS),
         )
         .scalar()
@@ -39,11 +57,11 @@ def comensales_reservados(db: Session, fecha: str, hora: str) -> int:
 
 
 def comprobar_disponibilidad(db: Session, fecha: str, hora: str, guests: int) -> dict:
-    """Comprueba si hay capacidad para una reserva y si la hora no ha pasado."""
+    """Comprueba la disponibilidad real verificando si queda alguna mesa física compatible."""
     hoy = date_cls.today()
     hoy_str = hoy.isoformat()
 
-    # 1) Validación de hora pasada (si la reserva es para hoy)
+    # 1) Validación de hora pasada
     if fecha == hoy_str:
         ahora_str = datetime.now().strftime("%H:%M")
         if hora < ahora_str:
@@ -53,59 +71,98 @@ def comprobar_disponibilidad(db: Session, fecha: str, hora: str, guests: int) ->
                 "remaining_capacity": 0
             }
 
-    # 2) Validación de capacidad existente
-    capacidad = _capacidad_total(db)
-    ocupados = comensales_reservados(db, fecha, hora)
-    restante = capacidad - ocupados
+    # 2) Validación basada en asignación de mesas reales (Best-fit simulado)
+    mesa_disponible_id = _asignar_mesa(db, fecha, hora, guests)
 
-    if guests <= restante:
+    if mesa_disponible_id is not None:
         return {
             "available": True,
             "message": "¡Hay disponibilidad para su reserva!",
-            "remaining_capacity": restante,
+            "remaining_capacity": guests, # Retornamos el grupo ya que hay mesa física viable
         }
+        
     return {
         "available": False,
-        "message": (
-            "Lo sentimos, no queda disponibilidad para esa franja horaria. "
-            "Pruebe con otra hora o fecha."
-        ),
-        "remaining_capacity": max(restante, 0),
+        "message": "Lo sentimos, no queda ninguna mesa disponible para ese número de comensales en esta franja.",
+        "remaining_capacity": 0,
     }
+
+def obtener_mapa_horas_disponibles(db: Session, fecha: str, guests: int) -> dict:
+    """Devuelve el estado exacto de los botones del formulario usando simulación de mesas."""
+    todas_las_horas = [
+        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+        "20:00", "20:30", "21:00", "21:30", "22:00", "22:30"
+    ]
+    
+    mapa_disponibilidad = {}
+    hoy_str = date_cls.today().isoformat()
+    ahora_str = datetime.now().strftime("%H:%M")
+
+    for h in todas_las_horas:
+        if fecha == hoy_str and h < ahora_str:
+            mapa_disponibilidad[h] = False
+            continue
+            
+        mesa_id = _asignar_mesa(db, fecha, h, guests)
+        mapa_disponibilidad[h] = mesa_id is not None
+
+    return mapa_disponibilidad
 
 
 def _asignar_mesa(db: Session, fecha: str, hora: str, guests: int) -> Optional[int]:
-    """Asigna la mesa libre más pequeña que acomode a los comensales."""
+    """Asigna la mesa libre más pequeña que no tenga reservas activas en esa franja de tiempo."""
+    t_min, t_max = _obtener_rango_conflicto(hora)
+    
+    # Buscamos qué IDs de mesa están ocupados en este rango de 90 minutos
     mesas_ocupadas = {
         r.table_id
         for r in db.query(Reservation.table_id)
         .filter(
             Reservation.date == fecha,
-            Reservation.time == hora,
+            Reservation.time.between(t_min, t_max),  # Solapamiento temporal protegido
             Reservation.status.in_(ESTADOS_ACTIVOS),
             Reservation.table_id.isnot(None),
         )
         .all()
     }
+    
+    # Algoritmo Best-fit: Filtra y ordena por capacidad ascendente
     mesas = (
         db.query(Table)
         .filter(Table.is_active.is_(True), Table.capacity >= guests)
         .order_by(Table.capacity.asc())
         .all()
     )
+    
     for mesa in mesas:
         if mesa.id not in mesas_ocupadas:
             return mesa.id
+            
     return None
 
 
 def crear_reserva(db: Session, data: ReservationCreate) -> Reservation:
-    """Crea una reserva asignando mesa automáticamente si es posible."""
+    """Crea una reserva asignando mesa y confirmando automáticamente si hay sitio.
+    
+    - Grupos normales (hasta 6 comensales): Se confirma automáticamente ("confirmed").
+    - Grupos grandes (más de 6 comensales): Queda pendiente de revisión manual ("pending").
+    """
     table_id = _asignar_mesa(db, data.date, data.time, data.guests)
+    
+    # Decidimos el estado según el tamaño del grupo (Enfoque Híbrido)
+    if data.guests <= 6:
+        nuevo_estado = "confirmed"
+    else:
+        nuevo_estado = "pending"
+
+    # Si por algún motivo no hay mesa física libre, NUNCA la confirmamos automáticamente, pasa a pendiente para que la revises en el dashboard.
+    if not table_id:
+        nuevo_estado = "pending"
+        
     reserva = Reservation(
         **data.model_dump(),
         table_id=table_id,
-        status="pending",
+        status=nuevo_estado,
     )
     db.add(reserva)
     db.commit()
@@ -168,7 +225,7 @@ def estadisticas_dashboard(db: Session) -> dict:
         .scalar()
     )
     reservas_semana = (
-        db.query(func.count(Reservation.id))
+        db.query(func.count(func.distinct(Reservation.id)))
         .filter(Reservation.date >= inicio_semana, Reservation.date <= fin_semana)
         .scalar()
     )
@@ -177,6 +234,8 @@ def estadisticas_dashboard(db: Session) -> dict:
     )
 
     capacidad = _capacidad_total(db)
+    
+    # Comensales totales activos del día de hoy
     comensales_hoy = (
         db.query(func.coalesce(func.sum(Reservation.guests), 0))
         .filter(

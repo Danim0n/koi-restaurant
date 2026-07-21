@@ -18,9 +18,23 @@
     dateInput.min = hoyStr;
     dateInput.value = hoyStr;
 
-    // ---- Generar franjas horarias (13:00 – 22:30 cada 30 min) ----
+    // ---- Generar franjas horarias (12:00 – 15:30 y 20:00 – 22:30 cada 30 min) ----
     (function generarHoras() {
-        for (let h = 13; h <= 22; h++) {
+        timeSelect.innerHTML = '<option value="">Selecciona una hora</option>';
+
+        // Turno de Comida: 12:00 a 15:30
+        for (let h = 12; h <= 15; h++) {
+            ['00', '30'].forEach(function (m) {
+                const valor = String(h).padStart(2, '0') + ':' + m;
+                const opt = document.createElement('option');
+                opt.value = valor;
+                opt.textContent = valor;
+                timeSelect.appendChild(opt);
+            });
+        }
+
+        // Turno de Cena: 20:00 a 22:30
+        for (let h = 20; h <= 22; h++) {
             ['00', '30'].forEach(function (m) {
                 const valor = String(h).padStart(2, '0') + ':' + m;
                 const opt = document.createElement('option');
@@ -30,6 +44,81 @@
             });
         }
     })();
+
+    // ---- Función para actualizar las horas desde el servidor ----
+    async function actualizarHorasDisponibles() {
+        const fecha = dateInput.value;
+        const comensales = campoPorNombre('guests').value;
+
+        // 1. GUARDAR LA HORA ELEGIDA ACTUALMENTE
+        const horaPrevia = timeSelect.value;
+
+        if (!fecha || !comensales) return;
+
+        // Limpiamos y ponemos un estado de carga temporal
+        timeSelect.innerHTML = '<option value="">Cargando horarios...</option>';
+
+        try {
+            const res = await fetch(`/api/reservations/availability?date=${fecha}&guests=${comensales}`);
+            if (!res.ok) throw new Error();
+
+            const mapaHoras = await res.json();
+
+            timeSelect.innerHTML = '<option value="">Selecciona una hora</option>';
+
+            // Estructura de turnos para mantener el orden visual
+            const turnos = [
+                { nombre: 'Comidas', horas: ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30'] },
+                { nombre: 'Cenas', horas: ['20:00', '20:30', '21:00', '21:30', '22:00', '22:30'] }
+            ];
+
+            if (mapaHoras.error_cierre) {
+                timeSelect.innerHTML = '<option value="">Restaurante Cerrado</option>';
+                return;
+            }
+
+            let horaSigueDisponible = false;
+
+            turnos.forEach(turno => {
+                turno.horas.forEach(hora => {
+                    const opt = document.createElement('option');
+                    opt.value = hora;
+
+                    const disponible = mapaHoras[hora];
+                    if (!disponible) {
+                        opt.disabled = true;
+                        opt.textContent = hora + ' (Completo)';
+                        opt.style.color = '#888'; // Gris visual en navegadores compatibles
+                    } else {
+                        opt.textContent = hora;
+                        // 2. SI LA HORA PREVIA SIGUE LIBRE, LA SELECCIONAMOS
+                        if (hora === horaPrevia) {
+                            opt.selected = true;
+                            horaSigueDisponible = true;
+                        }
+                    }
+
+                    timeSelect.appendChild(opt);
+                });
+            });
+
+            // 3. SI LA HORA ANTERIOR YA NO ESTÁ DISPONIBLE, LIMPIAMOS LA SELECCIÓN
+            if (!horaSigueDisponible && horaPrevia) {
+                timeSelect.value = '';
+            }
+
+        } catch (err) {
+            timeSelect.innerHTML = '<option value="">Error al cargar horas</option>';
+        }
+    }
+
+    // ---- Eventos para disparar la comprobación ----
+    // Cuando cambie la fecha o el número de comensales, recalculamos los huecos grises
+    dateInput.addEventListener('change', actualizarHorasDisponibles);
+    campoPorNombre('guests').addEventListener('change', actualizarHorasDisponibles);
+
+    // Ejecución inicial al cargar la página con la fecha de hoy
+    actualizarHorasDisponibles();
 
     // ---- Validadores ----
     const validadores = {
@@ -133,10 +222,14 @@
 
             if (res.ok) {
                 const reserva = await res.json();
+
+                const partesFecha = datos.date.split('-');
+                const fechaFormateada = partesFecha[2] + '/' + partesFecha[1] + '/' + partesFecha[0];
+
                 mostrarMensaje(
                     '¡Gracias, ' + datos.customer_name + '! Tu reserva para ' + datos.guests +
-                    ' personas el ' + datos.date + ' a las ' + datos.time +
-                    ' se ha registrado. Te confirmaremos en breve.',
+                    ' personas el ' + fechaFormateada + ' a las ' + datos.time +
+                    ' ha sido confirmada automáticamente. ¡Te esperamos en Koi!',
                     'success'
                 );
                 form.reset();
